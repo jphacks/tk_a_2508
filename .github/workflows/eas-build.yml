@@ -1,0 +1,47 @@
+name: EAS Build (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform (ios|android)'
+        required: true
+        default: 'android'
+      profile:
+        description: 'EAS profile (development|preview|production)'
+        required: true
+        default: 'development'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Install EAS CLI
+        run: npm i -g eas-cli@latest
+
+      - name: Build with EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --non-interactive \
+            --platform ${{ github.event.inputs.platform }} \
+            --profile ${{ github.event.inputs.profile }}
+
+      - name: Upload artifacts link
+        if: always()
+        run: |
+          echo "Build triggered. Check EAS dashboard for status."
+

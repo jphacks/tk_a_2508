@@ -341,7 +341,6 @@ docker-compose up -d --build
 ### その他の注意
 - iOS公開の最終申請のみMacが必要です（MacinCloud等で代替可能）
 - 環境変数で困った場合は、チームリーダーに相談してください
-
 ---
 
 ## 参考: JPHACKS 提供テンプレート
