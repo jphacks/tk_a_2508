@@ -237,8 +237,13 @@ jp_hacks/
 ├─ babel.config.js         # Babel 設定
 ├─ Dockerfile              # コンテナのビルド手順
 ├─ docker-compose.yml      # コンテナ起動・ポート設定
-├─ .env                    # 環境変数（各自作成。Gitにコミットしない）
-└─ assets/                 # アイコン・スプラッシュ等の画像置き場
+├─ eas.json                # EAS（Expo Application Services）の設定
+├─ LICENSE                 # ライセンス
+├─ README.md               # ドキュメント（本ファイル）
+├─ assets/                 # 画像・アイコン類
+│  └─ README.md
+├─ node_modules/           # 依存パッケージ（コミットしない）
+└─ .env                    # 環境変数（各自作成。Gitにコミットしない）
 ```
 
 ## 編集ポイント（よく触る場所）
