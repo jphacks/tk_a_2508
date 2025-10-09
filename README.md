@@ -62,7 +62,8 @@
    - 初回起動後、Settings → General:
      - ✅ Use the WSL 2 based engine（WSL2 を使用）
      - ✅ Start Docker Desktop when you log in（任意）
-   - 右下クジラメニューで「Switch to Linux containers」を選択（Linux コンテナに切替）
+   - 最新の書き方（推奨）: Linux コンテナで動作していることを確認（UI 文言はバージョンにより変わります）
+   - 従来の書き方（参考）: 右下クジラメニューから Linux containers に切替
    - 前提: タスクトレイのクジラが緑（Docker Desktop がバックグラウンドで起動中）。ウィンドウを閉じてもOKですが、Quitすると停止します。
 2. WSL2 を有効化（未有効の場合）
    - 管理者 PowerShell:
@@ -131,10 +132,12 @@ EXPO_PUBLIC_EXPO_PROJECT_ID=your-project-id
 #### 🚀 自分で実行する部分
 ```bash
 # Docker Desktop が起動済み（クジラが緑）であることを確認
-# 初回はビルドも実行（時間がかかります）
-docker-compose up -d --build
+# 最新の書き方（推奨 / 2025-0）
+docker compose up -d --build   # 初回はビルドあり（時間がかかります）
+docker compose up -d           # 2回目以降は通常起動
 
-# 2回目以降は通常起動のみ
+# 従来の書き方（レガシー / 互換のため参考）
+docker-compose up -d --build
 docker-compose up -d
 ```
 
@@ -167,12 +170,14 @@ docker-compose up -d
 
 1. **Android Studio をインストール**
    - https://developer.android.com/studio からダウンロード
-   - **推奨バージョン**: Android Studio 2025.1 以降
+   - **推奨**: 最新版の Android Studio
    - インストール時に以下を選択：
      - ✅ **Android SDK**
      - ✅ **Android Virtual Device (AVD)**
-     - ✅ **Android Emulator** (v36.1.9 以降)
-     - ✅ **Intel x86 Emulator Accelerator (HAXM installer)**
+    - ✅ **Android Emulator**（最新版）
+    - ✅ ハードウェア仮想化アクセラレーション（最新推奨）
+      - Windows: Hyper-V または WSL2 ベース（推奨）
+      - 旧来: Intel CPU 環境では HAXM（互換情報として参考）
 
 2. **インストール時に選択し忘れた場合の対処**
    - Android Studio を起動
@@ -281,8 +286,13 @@ jp_hacks/
      ```
   2) 再起動
      ```bash
+     # 最新の書き方（推奨）
      docker compose down
      docker compose up -d --build
+
+     # 従来の書き方（参考）
+     docker-compose down
+     docker-compose up -d --build
      ```
   3) スクリプトで起動（任意）
      - `package.json` に以下を追加しておくと `npm run dev` で Web 起動
@@ -320,25 +330,24 @@ adb start-server
 ### iPhone で接続できない場合
 - 同じ Wi-Fi ネットワークか確認
 - ファイアウォール設定を確認
-- `docker-compose logs -f` でエラーログを確認
+- `docker compose logs -f`（最新）または `docker-compose logs -f`（従来）でエラーログを確認
 
 ## よく使うコマンド
 
 ### コンテナの操作
 ```bash
-# コンテナを起動
+# 最新の書き方（推奨）
+docker compose up -d          # コンテナを起動
+docker compose down           # コンテナを停止
+docker compose restart        # 再起動（設定変更後など）
+docker compose logs -f        # ログを確認
+docker compose exec app bash  # コンテナ内シェルに入る
+
+# 従来の書き方（参考）
 docker-compose up -d
-
-# コンテナを停止
 docker-compose down
-
-# コンテナを再起動（設定変更後など）
 docker-compose restart
-
-# ログを確認（エラーが出た時）
 docker-compose logs -f
-
-# コンテナ内のシェルに入る（デバッグ用）
 docker-compose exec app bash
 ```
 
@@ -349,6 +358,11 @@ docker-compose exec app bash
 # ブラウザで http://localhost:19002 を開き直す
 
 # コンテナを完全にリビルド（問題が起きた時）
+# 最新の書き方（推奨）
+docker compose down
+docker compose up -d --build
+
+# 従来の書き方（参考）
 docker-compose down
 docker-compose up -d --build
 ```
