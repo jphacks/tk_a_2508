@@ -227,6 +227,55 @@ docker-compose up -d
    - PC と iPhone を同じ Wi-Fi に接続
    - Docker コンテナが起動したら、iPhone の Expo Go で QRコードをスキャン
 
+### iPhone で接続できない場合の解決方法
+
+#### 問題：Expo Goが「Home diagnostics settings」しか表示されない
+**原因**: ExpoサーバーがDockerコンテナの内部IPアドレス（172.x.x.x）で起動し、iPhoneからアクセスできない
+
+#### 解決手順：
+
+1. **PCのローカルIPアドレスを確認**
+   ```bash
+   # Windows PowerShell
+   ipconfig | findstr "IPv4"
+   # 例: 192.168.3.5
+   ```
+
+2. **`.env`ファイルを作成・設定**
+   ```bash
+   # プロジェクトルートに.envファイルを作成
+   notepad .env
+   ```
+   
+   `.env`ファイルに以下を記述：
+   ```env
+   # Supabase の設定（必須）
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   
+   # Expo の設定（必須）
+   EXPO_PUBLIC_EXPO_PROJECT_ID=your-project-id
+   
+   # iPhone接続用（重要！）
+   HOST_IP=192.168.3.5  # ← 上記で確認したIPアドレス
+   ```
+
+3. **Dockerコンテナを再起動**
+   ```bash
+   docker compose down
+   docker compose up -d --build
+   ```
+
+4. **接続確認**
+   - ブラウザで `http://localhost:19002` を開く
+   - QRコードをiPhoneのカメラアプリでスキャン
+   - または、Expo Goアプリで手動入力: `exp://192.168.3.5:8081`
+
+#### 技術的説明
+- `docker-compose.yml`で`REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP}`を設定
+- `.env`ファイルの`HOST_IP`でPCのローカルIPを指定
+- これによりExpoサーバーが正しいIPアドレスで起動し、iPhoneからアクセス可能になる
+
 ## 開発フロー
 - **日常開発**: Android エミュレーター（高速起動、ホットリロード）
 - **実機確認**: iPhone 実機（定期的な動作確認、最終UI/UXテスト）
@@ -289,10 +338,6 @@ jp_hacks/
      # 最新の書き方（推奨）
      docker compose down
      docker compose up -d --build
-
-     # 従来の書き方（参考）
-     docker-compose down
-     docker-compose up -d --build
      ```
   3) スクリプトで起動（任意）
      - `package.json` に以下を追加しておくと `npm run dev` で Web 起動

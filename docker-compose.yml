@@ -6,6 +6,9 @@ services:
     container_name: jp-hacks-expo
     env_file:
       - .env
+    environment:
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP} 
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
     ports:
       - "19000:19000"
       - "19001:19001"
@@ -14,7 +17,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: bash -lc "npx expo start --lan --clear"
+    command: bash -lc "npx expo start --host tunnel"
     tty: true
     stdin_open: true
 

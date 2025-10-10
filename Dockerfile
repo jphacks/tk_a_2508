@@ -30,6 +30,8 @@ RUN if [ -f package-lock.json ]; then npm ci; \
 # Install global CLIs used in this project
 RUN npm install -g eas-cli@latest
 
+RUN npm install -g @expo/ngrok
+
 # Copy the rest of the source
 COPY . .
 
