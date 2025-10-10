@@ -323,6 +323,8 @@ jp_hacks/
 ├─ assets/                 # 画像・アイコン類
 │  └─ README.md
 ├─ node_modules/           # 依存パッケージ（コミットしない）
+├─ .github/                # CI/CD 設定（GitHub Actions 等）
+├─ .expo/                  # Expo の開発設定・キャッシュ
 └─ .env                    # 環境変数（各自作成。Gitにコミットしない）
 ```
 
@@ -339,6 +341,14 @@ jp_hacks/
   - `EXPO_PUBLIC_*` で始まる公開環境変数（Supabase URL/KEY など）
 - `docker-compose.yml`
   - ポート設定（Web を使うなら `19006:19006` を追加）
+
+## ナビゲーション（React Navigation）
+- 追加済みパッケージ：`@react-navigation/native`, `@react-navigation/native-stack`, `react-native-screens`, `react-native-safe-area-context`
+- 初期設定：`App.tsx` に `NavigationContainer` と `createNativeStackNavigator` を追加し、`Home`/`Details` の2画面を作成
+- 使い方：
+  - 画面遷移: `navigation.navigate('Details', { from: 'Home' })`
+  - 画面登録: `Stack.Screen name="ScreenName" component={ScreenComponent}`
+
 
 ## Web 起動方法（React Native Web / Expo Web）
 - 一時的に起動する場合（ポート開放なしでも可）
