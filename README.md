@@ -227,6 +227,32 @@ docker-compose up -d
    - PC と iPhone を同じ Wi-Fi に接続
    - Docker コンテナが起動したら、iPhone の Expo Go で QRコードをスキャン
 
+### ホットリロードが遅い場合の解決方法
+
+#### 問題：iPhone実機でコード変更が即座に反映されない
+**原因**: Docker環境でのファイル監視が適切に設定されていない
+
+#### 解決手順：
+1. **`docker-compose.yml`に`WATCHPACK_POLLING=true`を追加**
+   ```yaml
+   services:
+     app:
+       environment:
+         - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP} 
+         - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+         - WATCHPACK_POLLING=true  # ← この行を追加
+   ```
+
+2. **コンテナを再起動**
+   ```bash
+   docker compose down
+   docker compose up -d --build
+   ```
+
+3. **確認**
+   - コードを変更すると、iPhone実機でも数秒以内に反映される
+   - 特にiPhone実機では`--lan`モード（`--tunnel`より高速）
+
 ### iPhone で接続できない場合の解決方法
 
 #### 問題：Expo Goが「Home diagnostics settings」しか表示されない
