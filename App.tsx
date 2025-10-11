@@ -1,3 +1,11 @@
+
+import React from 'react';
+import { AppNavigator } from './src/navigation/AppNavigator';
+
+export default function App() {
+  return <AppNavigator />;
+}
+
 import React from "react";
 import { SafeAreaView, Text, View, StyleSheet } from "react-native";
 
@@ -20,3 +28,4 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 24, fontWeight: "600", marginBottom: 8 },
 });
+

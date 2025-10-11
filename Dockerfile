@@ -27,6 +27,9 @@ RUN if [ -f package-lock.json ]; then npm ci; \
     elif [ -f yarn.lock ]; then npm install -g yarn && yarn install --frozen-lockfile; \
     else npm install; fi
 
+# Install Expo dependencies and fix any compatibility issues
+RUN npx expo install --fix
+
 # Install global CLIs used in this project
 RUN npm install -g eas-cli@latest
 
