@@ -1,18 +1,14 @@
-# Base image with Debian for better tooling compatibility (watchman not needed with Expo)
+# Base image with Debian for better tooling compatibility
 FROM node:20-bullseye
 
 # Avoid interactive prompts during apt install
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install useful OS deps
+# Install essential OS deps only
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     ca-certificates \
-    python3 \
-    build-essential \
-    openssh-client \
-    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -30,10 +26,13 @@ RUN if [ -f package-lock.json ]; then npm ci; \
 # Install Expo dependencies and fix any compatibility issues
 RUN npx expo install --fix
 
+# Install React Navigation dependencies
+RUN npm install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context
+
 # Install global CLIs used in this project
 RUN npm install -g eas-cli@latest
 
-RUN npm install -g @expo/ngrok
+RUN npm install -g @expo/ngrok@^4.1.0
 
 # Copy the rest of the source
 COPY . .
@@ -50,6 +49,6 @@ EXPOSE 19000 19001 19002 8081
 SHELL [ "/bin/bash", "-lc" ]
 
 # Start Expo in tunnel mode by default to avoid LAN/ADB networking issues across host/container
-CMD ["bash", "-lc", "if [ -f package-lock.json ]; then npm ci; else npm install; fi && npx expo start --tunnel"]
+CMD ["bash", "-lc", "if [ -f package-lock.json ]; then npm ci; else npm install; fi && npx expo install --fix && npx expo start --tunnel"]
 
 
