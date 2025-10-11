@@ -79,6 +79,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             フレンド
           </Text>
         </TouchableOpacity>
+
       </View>
 
       {/* コンテンツエリア */}
