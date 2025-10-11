@@ -49,6 +49,6 @@ EXPOSE 19000 19001 19002 8081
 SHELL [ "/bin/bash", "-lc" ]
 
 # Start Expo in tunnel mode by default to avoid LAN/ADB networking issues across host/container
-CMD ["bash", "-lc", "npx expo start --tunnel --port 8081"]
+CMD ["bash", "-lc", "if [ -f package-lock.json ]; then npm ci; else npm install; fi && npx expo install --fix && npx expo start --tunnel"]
 
 
