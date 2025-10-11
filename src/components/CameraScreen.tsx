@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, StatusBar } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '../supabase';
+import { supabase } from '../lib/supabase';
 import { PhotoService } from '../services/photoService';
 
 const { width, height } = Dimensions.get('window');
