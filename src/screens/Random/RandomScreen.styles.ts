@@ -272,13 +272,7 @@ export const RandomStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 6,
-    resizeMode: 'cover',
-    opacity: 0.95,
-  },
+  
   waveBottom: {
     width: '100%',
     height: 26,
@@ -319,6 +313,7 @@ export const RandomStyles = StyleSheet.create({
     color: theme.colors.text.primary,
     textAlign: "center",
     lineHeight: 24,
+  },
   smallAvatar: {
     width: 36,
     height: 36,
