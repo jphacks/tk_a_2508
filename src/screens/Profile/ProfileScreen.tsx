@@ -1,12 +1,10 @@
-// screens/ProfileScreen.tsx
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const ProfileScreen = () => {
+export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Lazy Busters プロフィール</Text>
+      <Text style={styles.title}>プロフィール</Text>
       <Text>ここからプロフィール画面の実装を始めます。</Text>
     </View>
   );
@@ -26,4 +24,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+// single default export above

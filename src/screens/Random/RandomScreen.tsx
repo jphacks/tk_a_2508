@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
 import { RandomStyles } from './RandomScreen.styles';
 import { FriendScreen } from '../Friend/FriendScreen';
+import ProfileScreen from '../Profile/ProfileScreen';
 
 const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
