@@ -1,16 +1,25 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
+import { supabase } from '../../lib/supabase';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
 
 const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
 
+type Photo = {
+  id: string;
+  url: string; // public URL
+  user_id?: string;
+  created_at?: string;
+};
+
 export function RandomScreen() {
   const [active, setActive] = useState<'home' | 'friend'>('home');
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const screenWidth = Dimensions.get('window').width;
 
   // Animated value tracking horizontal scroll position
@@ -43,6 +52,79 @@ export function RandomScreen() {
     }).start();
     setActive(index === 0 ? 'home' : 'friend');
   };
+
+  // Fetch initial photos and subscribe to realtime INSERTs
+  useEffect(() => {
+    let isMounted = true;
+
+    const sortPhotos = (list: Photo[], currentUserId?: string) => {
+      return list.sort((a, b) => {
+        // put current user's photos first
+        if (currentUserId) {
+          const aIsMine = a.user_id === currentUserId ? 1 : 0;
+          const bIsMine = b.user_id === currentUserId ? 1 : 0;
+          if (aIsMine !== bIsMine) return bIsMine - aIsMine; // mine first
+        }
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime; // newest first
+      });
+    };
+
+    const load = async () => {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData?.user?.id;
+
+        // Assume a table 'photos' with columns id, url, user_id, created_at
+        const { data, error } = await supabase
+          .from('photos')
+          .select('id, url, user_id, created_at')
+          .order('created_at', { ascending: false });
+        if (error) {
+          console.warn('supabase fetch photos error', error);
+        } else if (isMounted && data) {
+          setPhotos(sortPhotos([...data], userId));
+        }
+
+        // subscribe to new photos
+        // Realtime subscription using Realtime v2: create a channel
+        const channel = supabase.channel('public:photos')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'photos' }, (payload: any) => {
+            const newPhoto: Photo = payload.new as Photo;
+            setPhotos((prev) => {
+              const exists = prev.find((p) => p.id === newPhoto.id);
+              const merged = exists ? prev.map((p) => (p.id === newPhoto.id ? newPhoto : p)) : [newPhoto, ...prev];
+              return sortPhotos(merged, userId);
+            });
+          })
+          .subscribe();
+
+        return () => {
+          isMounted = false;
+          try {
+            // unsubscribe (safe-guard for different supabase versions)
+            try {
+              channel.unsubscribe();
+            } catch (e) {
+              // ignore
+            }
+          } catch (e) {
+            // ignore
+          }
+        };
+      } catch (e) {
+        console.warn('error loading photos', e);
+      }
+    };
+
+    const unsubPromise = load();
+
+    return () => {
+      // if load returned cleanup, call it
+      Promise.resolve(unsubPromise).then((cleanup: any) => cleanup && cleanup());
+    };
+  }, []);
 
   // We will not use horizontal paging scroll; render pages conditionally below
 
@@ -278,11 +360,21 @@ export function RandomScreen() {
                 <Text style={RandomStyles.cardSubtitle}>新しいチャレンジを始めましょう！</Text>
               </View>
               <View style={RandomStyles.cardContent}>
-                <Image source={sampleImage} style={RandomStyles.cardImage} />
+                {/* show latest photo (photos[0]) if exists, else fallback to sampleImage */}
+                <Image source={photos[0] ? { uri: photos[0].url } : sampleImage} style={RandomStyles.cardImage} />
                 <TouchableOpacity style={RandomStyles.cardButton}>
                   <Text style={RandomStyles.cardButtonText}>開始する</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* thumbnail strip */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
+                {photos.map((p) => (
+                  <TouchableOpacity key={p.id} onPress={() => { /* open or focus logic */ }} style={{ marginRight: 8 }}>
+                    <Image source={{ uri: p.url }} style={{ width: 64, height: 64, borderRadius: 8 }} />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
         ) : (
