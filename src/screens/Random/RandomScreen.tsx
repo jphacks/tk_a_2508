@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { RandomStyles } from './RandomScreen.styles';
+import React from "react";
+import { View, Text } from "react-native";
+import { RandomStyles } from "./RandomScreen.styles";
 
 export function RandomScreen() {
   return (
