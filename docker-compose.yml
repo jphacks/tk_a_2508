@@ -18,7 +18,13 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: bash -lc "npx expo start --host tunnel"
+    command: bash -lc "npm install && npx expo install --fix && npx expo start --tunnel --port 8081"
     tty: true
     stdin_open: true
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
