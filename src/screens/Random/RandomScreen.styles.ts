@@ -6,6 +6,10 @@ const { width } = Dimensions.get('window');
 export const RandomStyles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.lg,
+    justifyContent: "center",
+    alignItems: "center",
     position: 'relative',
   },
   backgroundGradient: {
@@ -296,6 +300,25 @@ export const RandomStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
+  subtitle: {
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.xl,
+    textAlign: "center",
+  },
+  content: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.lg,
+    width: "100%",
+    maxWidth: 300,
+  },
+  description: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
+    textAlign: "center",
+    lineHeight: 24,
   smallAvatar: {
     width: 36,
     height: 36,
