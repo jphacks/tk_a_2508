@@ -322,6 +322,7 @@ export const RandomStyles = StyleSheet.create({
     color: theme.colors.text.primary,
     textAlign: "center",
     lineHeight: 24,
+  },
   smallAvatar: {
     width: 36,
     height: 36,
