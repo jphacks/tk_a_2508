@@ -1,22 +1,28 @@
-import React from "react";
-import { SafeAreaView, Text, View, StyleSheet } from "react-native";
+// App.tsx の内容を以下に書き換えます
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const appEnv = process.env.EXPO_PUBLIC_APP_ENV;
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+// 作成した画面をインポート
+import ProfileScreen from "./screens/ProfileScreen"; 
+// 現在のApp.tsxの画面を仮のHome画面とします
+import HomeScreen from "./screens/HomeScreen"; 
+
+// スタックナビゲーターを初期化
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <View>
-        <Text style={styles.title}>JP hu</Text>
-        <Text>ENV: {appEnv}</Text>
-        <Text>Supabase URL: {supabaseUrl ? "configured" : "not set"}</Text>
-      </View>
-    </SafeAreaView>
+    // アプリ全体のナビゲーションコンテナ
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        {/* Home画面 (元のApp.tsxの内容を移植) */}
+        <Stack.Screen name="Home" component={HomeScreen} />
+        
+        {/* プロフィール画面の登録 */}
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 24, fontWeight: "600", marginBottom: 8 },
-});
