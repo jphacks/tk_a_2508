@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, StatusBar } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../supabase';
+import { PhotoService } from '../services/photoService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,9 +53,28 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
         });
         
         if (photo?.uri) {
-          onPhotoTaken(photo.uri);
+          // 現在のユーザーを取得
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError || !user) {
+            Alert.alert('エラー', 'ユーザー認証が必要です');
+            return;
+          }
+
+          // 写真をSupabaseにアップロード
+          try {
+            const uploadedPhoto = await PhotoService.uploadPhoto(photo.uri, user.id);
+            console.log('写真がアップロードされました:', uploadedPhoto);
+            onPhotoTaken(uploadedPhoto.url);
+          } catch (uploadError) {
+            console.error('アップロードエラー:', uploadError);
+            Alert.alert('エラー', '写真のアップロードに失敗しました');
+            // アップロードに失敗してもローカルのURIを返す
+            onPhotoTaken(photo.uri);
+          }
         }
       } catch (error) {
+        console.error('撮影エラー:', error);
         Alert.alert('エラー', '写真の撮影に失敗しました');
       }
     }
