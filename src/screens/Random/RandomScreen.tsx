@@ -19,6 +19,7 @@ export function RandomScreen() {
   const moveRange = (pillWidth - iconWrapWidth - pillInnerPadding) / 2; // distance from center to left/right
   // Animated value tracking indicator position (in pixels, -moveRange..moveRange)
   const indicatorX = useRef(new Animated.Value(active === 'home' ? -moveRange : moveRange)).current;
+  const currentIndicatorX = useRef(active === 'home' ? -moveRange : moveRange);
   const iconWidth = 24;
   const indicatorWidth = 48;
   const pillCenter = pillWidth / 2;
@@ -31,6 +32,7 @@ export function RandomScreen() {
   const scrollToPage = (index: number) => {
     const target = index === 0 ? -moveRange : moveRange;
     // animate indicator to the target with improved spring animation
+    currentIndicatorX.current = target;
     Animated.spring(indicatorX, { 
       toValue: target, 
       useNativeDriver: true, 
@@ -95,15 +97,16 @@ export function RandomScreen() {
     },
     onPanResponderMove: (_, gestureState) => {
       // リアルタイムでインジケーターを移動させるが、範囲内に制限
-      const start = indicatorX.getValue();
+      const start = currentIndicatorX.current;
       const next = Math.max(-moveRange, Math.min(moveRange, start + gestureState.dx));
       indicatorX.setValue(next);
+      currentIndicatorX.current = next;
       // bias ripples toward movement direction
       sideOffset.setValue(gestureState.dx >= 0 ? 14 : -14);
     },
     onPanResponderRelease: (_, gestureState) => {
       const dx = gestureState.dx;
-      const current = indicatorX.getValue();
+      const current = currentIndicatorX.current;
       const threshold = 8; // px - より敏感に
       
       let target: number;
@@ -120,6 +123,7 @@ export function RandomScreen() {
         target = distanceToLeft < distanceToRight ? -moveRange : moveRange;
       }
       // animate indicator to target and revert lift/scale, stop ripples
+      currentIndicatorX.current = target;
       Animated.parallel([
         Animated.spring(indicatorX, { 
           toValue: target, 
