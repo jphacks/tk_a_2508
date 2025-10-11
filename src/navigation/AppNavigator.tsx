@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Image, StyleSheet } from 'react-native';
 import { RootStackParamList } from './types';
 import { HomeScreen } from '../screens/HomeScreen';
 // 🧪 テスト用: 新しい画面を直接表示したい場合は以下をアンコメント
@@ -23,9 +24,16 @@ export function AppNavigator() {
           },
         }}
       >
-        <Stack.Screen 
-          name="Home" 
+        <Stack.Screen
+          name="Home"
           component={HomeScreen}
+          options={{
+            // use app-style logo as centered title and avatar on the right
+            headerTitle: () => (
+              <Image source={require('../../assets/logo-header.png')} style={localStyles.logoImage} />
+            ),
+            headerShown: false,
+          }}
         />
         {/* 🧪 テスト用: 新しい画面を直接表示したい場合は以下をアンコメント
         <Stack.Screen 
@@ -38,3 +46,19 @@ export function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const localStyles = StyleSheet.create({
+  logoImage: {
+    width: 180,
+    height: 38,
+    resizeMode: 'contain',
+  },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+});
