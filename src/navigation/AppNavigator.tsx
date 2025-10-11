@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import { RootStackParamList } from './types';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/Login/LoginScreen';
@@ -30,11 +30,20 @@ export function AppNavigator() {
               onPress={() => navigation.navigate('Profile')}
               style={{ marginRight: 8 }}
             >
-              <Image source={require('../../assets/profile-placeholder.jpg')} style={localStyles.headerAvatar} />
+              <View style={localStyles.headerAvatar}>
+                <Text style={localStyles.avatarText}>👤</Text>
+              </View>
             </TouchableOpacity>
           ),
         })}
       >
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
         <Stack.Screen
           name="Home"
           component={HomeScreen}
@@ -68,5 +77,12 @@ const localStyles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 2,
     borderColor: '#fff',
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    color: '#fff',
   },
 });

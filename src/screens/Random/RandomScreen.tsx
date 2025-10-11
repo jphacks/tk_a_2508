@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
@@ -12,9 +13,9 @@ export function RandomScreen() {
   const screenWidth = Dimensions.get('window').width;
 
   // Animated value tracking horizontal scroll position
-  const pillWidth = 170; // should match styles
+  const pillWidth = 200; // should match styles
   const iconWrapWidth = 48;
-  const pillInnerPadding = 8; // left+right padding inside pill (approx)
+  const pillInnerPadding = 6; // left+right padding inside pill (approx)
   const moveRange = (pillWidth - iconWrapWidth - pillInnerPadding) / 2; // distance from center to left/right
   // Animated value tracking indicator position (in pixels, -moveRange..moveRange)
   const indicatorX = useRef(new Animated.Value(active === 'home' ? -moveRange : moveRange)).current;
@@ -29,8 +30,14 @@ export function RandomScreen() {
 
   const scrollToPage = (index: number) => {
     const target = index === 0 ? -moveRange : moveRange;
-    // animate indicator to the target
-    Animated.spring(indicatorX, { toValue: target, useNativeDriver: true, tension: 120, friction: 12 }).start();
+    // animate indicator to the target with improved spring animation
+    Animated.spring(indicatorX, { 
+      toValue: target, 
+      useNativeDriver: true, 
+      tension: 150, 
+      friction: 8,
+      overshootClamping: true 
+    }).start();
     setActive(index === 0 ? 'home' : 'friend');
   };
 
@@ -49,8 +56,17 @@ export function RandomScreen() {
 
   // PanResponder to allow strict swipes on the indicator itself (drag-only)
   const panResponder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dx) > 5,
+    onStartShouldSetPanResponder: (evt, gestureState) => {
+      // 手動で範囲を指定（現在: 200x60px）
+      const { locationX, locationY } = evt.nativeEvent;
+      const PILL_WIDTH = 200;   // ピルボタンの幅
+      const PILL_HEIGHT = 60;   // ピルボタンの高さ
+      return locationX >= 0 && locationX <= PILL_WIDTH && locationY >= 0 && locationY <= PILL_HEIGHT;
+    },
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      // 横方向の移動が縦方向より大きい場合のみ反応
+      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
+    },
     onPanResponderGrant: () => {
       // lift and slightly scale indicator for feedback
       Animated.parallel([
@@ -78,7 +94,8 @@ export function RandomScreen() {
       }, 400);
     },
     onPanResponderMove: (_, gestureState) => {
-      const start = indicatorX.__getValue();
+      // リアルタイムでインジケーターを移動させるが、範囲内に制限
+      const start = indicatorX.getValue();
       const next = Math.max(-moveRange, Math.min(moveRange, start + gestureState.dx));
       indicatorX.setValue(next);
       // bias ripples toward movement direction
@@ -86,19 +103,31 @@ export function RandomScreen() {
     },
     onPanResponderRelease: (_, gestureState) => {
       const dx = gestureState.dx;
-      const threshold = 12; // px
-      let target = indicatorX.__getValue();
+      const current = indicatorX.getValue();
+      const threshold = 8; // px - より敏感に
+      
+      let target: number;
+      
+      // 移動距離が閾値以上の場合、移動方向に切り替え
       if (dx > threshold) {
         target = moveRange; // to friend (right)
       } else if (dx < -threshold) {
         target = -moveRange; // to home (left)
       } else {
-        const current = indicatorX.__getValue();
-        target = Math.abs(current - (-moveRange)) < Math.abs(current - moveRange) ? -moveRange : moveRange;
+        // 移動距離が少ない場合、現在位置に基づいて最も近い位置に切り替え
+        const distanceToLeft = Math.abs(current - (-moveRange));
+        const distanceToRight = Math.abs(current - moveRange);
+        target = distanceToLeft < distanceToRight ? -moveRange : moveRange;
       }
       // animate indicator to target and revert lift/scale, stop ripples
       Animated.parallel([
-        Animated.spring(indicatorX, { toValue: target, useNativeDriver: true, tension: 120, friction: 12 }),
+        Animated.spring(indicatorX, { 
+          toValue: target, 
+          useNativeDriver: true, 
+          tension: 150, 
+          friction: 8,
+          overshootClamping: true 
+        }),
         Animated.spring(indicatorScale, { toValue: 1, useNativeDriver: true }),
         Animated.spring(indicatorLift, { toValue: 0, useNativeDriver: true }),
         Animated.spring(sideOffset, { toValue: 0, useNativeDriver: true }),
@@ -116,19 +145,46 @@ export function RandomScreen() {
   })).current;
   return (
     <View style={RandomStyles.container}>
-      <ScrollView contentContainerStyle={RandomStyles.scrollContent} showsVerticalScrollIndicator={false} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
+      {/* 背景グラデーション */}
+      <LinearGradient
+        colors={['rgba(3, 160, 229, 1)', 'rgba(8, 110, 255, 1)', 'rgba(3, 160, 229, 1)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={RandomStyles.backgroundGradient}
+      />
+      
+      <ScrollView 
+        contentContainerStyle={RandomStyles.scrollContent} 
+        showsVerticalScrollIndicator={false} 
+        nestedScrollEnabled={true} 
+        keyboardShouldPersistTaps="handled"
+        style={{ backgroundColor: 'transparent' }}
+      >
+        {/* ヘッダーエリア */}
         <View style={RandomStyles.header}>
-          <Image source={require('../../../assets/logo-header.png')} style={RandomStyles.logoImage} />
-          <Image source={profileImage} style={RandomStyles.headerAvatar} />
+          <View style={RandomStyles.logoContainer}>
+            <Image 
+              source={require('../../../assets/images/material-symbols_person-add.png')} 
+              style={RandomStyles.personAddIcon}
+              resizeMode="contain"
+            />
+            <Image 
+              source={require('../../../assets/Group 1000006493.png')} 
+              style={RandomStyles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
         <View style={RandomStyles.pillWrap}>
-          <View
-            style={[
-              RandomStyles.pill,
-              active === 'friend' && RandomStyles.pillFriendBackground,
-            ]}
-          >
+          <View style={RandomStyles.pill}>
+            {/* ピルボタンの背景グラデーション */}
+            <LinearGradient
+              colors={['rgba(10, 172, 228, 1)', 'rgba(11, 110, 221, 1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={RandomStyles.pillGradient}
+            />
             {/* Animated indicator (white circle) that moves left/right with scroll */}
             {/* ripples behind indicator */}
             <Animated.View
@@ -208,21 +264,19 @@ export function RandomScreen() {
           </View>
         </View>
 
-        {/* ページングは無効化。インジケータの状態で表示を切替 */}
+        {/* メインコンテンツエリア */}
         {active === 'home' ? (
-          <View style={{ width: screenWidth }}>
-            <View style={RandomStyles.sectionShadow}>
-              <View style={RandomStyles.waveTop} />
-              <View style={RandomStyles.card}>
-                <Image source={sampleImage} style={RandomStyles.cardImage} accessibilityLabel="feature image" />
+          <View style={RandomStyles.contentArea}>
+            <View style={RandomStyles.mainCard}>
+              <View style={RandomStyles.cardHeader}>
+                <Text style={RandomStyles.cardTitle}>今日のタスク</Text>
+                <Text style={RandomStyles.cardSubtitle}>新しいチャレンジを始めましょう！</Text>
               </View>
-              <View style={RandomStyles.waveBottom} />
-            </View>
-
-            <View style={RandomStyles.profileCard}>
-              <Image source={profileImage} style={RandomStyles.smallAvatar} accessibilityLabel="profile avatar" />
-              <View style={RandomStyles.profileImageWrap}>
-                <Image source={sampleImage} style={RandomStyles.profileImage} accessibilityLabel="profile image" />
+              <View style={RandomStyles.cardContent}>
+                <Image source={sampleImage} style={RandomStyles.cardImage} />
+                <TouchableOpacity style={RandomStyles.cardButton}>
+                  <Text style={RandomStyles.cardButtonText}>開始する</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -231,6 +285,11 @@ export function RandomScreen() {
             <FriendScreen />
           </View>
         )}
+        
+        {/* プロフィール画像（右下固定） */}
+        <TouchableOpacity style={RandomStyles.profileButton}>
+          <Image source={profileImage} style={RandomStyles.profileButtonImage} />
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
