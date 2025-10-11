@@ -26,7 +26,6 @@ export function AppNavigator() {
         <Stack.Screen 
           name="Home" 
           component={HomeScreen}
-          options={{ title: 'JP Hacks' }}
         />
         {/* 🧪 テスト用: 新しい画面を直接表示したい場合は以下をアンコメント
         <Stack.Screen 
