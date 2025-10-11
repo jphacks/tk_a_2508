@@ -4,8 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Image, StyleSheet } from 'react-native';
 import { RootStackParamList } from './types';
 import { HomeScreen } from '../screens/HomeScreen';
-// 🧪 テスト用: 新しい画面を直接表示したい場合は以下をアンコメント
-// import { NewScreen } from '../screens/NewScreen/NewScreen';
+import { LoginScreen } from '../screens/Login/LoginScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -13,7 +12,7 @@ export function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Home"
+        initialRouteName="Login"
         screenOptions={{
           headerStyle: {
             backgroundColor: '#6366f1',
