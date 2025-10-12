@@ -8,6 +8,7 @@ import  { useEffect } from "react";
 import { initNotifications } from "./src/lib/notifications";
 import { scheduleTodayRandoms, cancelAllScheduled } from "./src/lib/scheduleRandom";
 import { useNotificationNavigation } from "./src/hooks/useNotificationNavigation";
+import "react-native-url-polyfill/auto";
 
 const Stack = createNativeStackNavigator();
 const navRef = React.createRef<any>();

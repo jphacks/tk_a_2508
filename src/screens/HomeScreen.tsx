@@ -1,90 +1,64 @@
-import React, { useState } from 'react';
-import { SafeAreaView, View, TouchableOpacity, Text } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../styles/common';
 import { RandomScreen } from './Random/RandomScreen';
-import { TaskScreen } from './Task/TaskScreen';
-import { FriendScreen } from './Friend/FriendScreen';
-import { HomeStyles } from './HomeScreen.styles';
+import { PhotoModal } from '../components/PhotoModal';
+import { CameraScreen } from '../components/CameraScreen';
 
-type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
+export function HomeScreen() {
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasTakenPhoto, setHasTakenPhoto] = useState(false);
 
-type TabType = 'random' | 'task' | 'friend';
+  // ログイン後に写真撮影モーダルを表示
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPhotoModal(true);
+    }, 1000); // 1秒後にモーダルを表示
 
-export function HomeScreen({ navigation }: HomeScreenProps) {
-  // 🧪 テスト用: 新しい画面を表示したい場合は以下を変更
-  // const [activeTab, setActiveTab] = useState<TabType>('random');
-  const [activeTab, setActiveTab] = useState<TabType>('random');
-  // 例: const [activeTab, setActiveTab] = useState<TabType>('newscreen');
+    return () => clearTimeout(timer);
+  }, []);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'random':
-        return <RandomScreen />;
-      case 'task':
-        return <TaskScreen />;
-      case 'friend':
-        return <FriendScreen />;
-      default:
-        return <RandomScreen />;
+  const handleTakePhoto = () => {
+    setShowPhotoModal(false);
+    setShowCamera(true);
+  };
+
+  const handlePhotoTaken = (uri: string) => {
+    console.log('写真が撮影されました:', uri);
+    setShowCamera(false);
+    setHasTakenPhoto(true);
+    // ここで写真を保存したり、次の処理を行ったりできます
+  };
+
+  const handleCloseCamera = () => {
+    setShowCamera(false);
+    setShowPhotoModal(true);
+  };
+
+  const handleCloseModal = () => {
+    if (hasTakenPhoto) {
+      setShowPhotoModal(false);
     }
+    // 写真を撮影していない場合は閉じられない
   };
 
   return (
     <SafeAreaView style={commonStyles.container}>
-      {/* タブバー */}
-      <View style={HomeStyles.tabBar}>
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'random' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('random')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'random' && HomeStyles.activeTabButtonText
-          ]}>
-            ランダム
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'task' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('task')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'task' && HomeStyles.activeTabButtonText
-          ]}>
-            タスク
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'friend' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('friend')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'friend' && HomeStyles.activeTabButtonText
-          ]}>
-            フレンド
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* コンテンツエリア */}
-      <View style={HomeStyles.contentArea}>
-        {renderContent()}
-      </View>
+      <RandomScreen />
+      
+      <PhotoModal
+        visible={showPhotoModal}
+        onClose={handleCloseModal}
+        onTakePhoto={handleTakePhoto}
+      />
+      
+      {showCamera && (
+        <CameraScreen
+          onPhotoTaken={handlePhotoTaken}
+          onClose={handleCloseCamera}
+        />
+      )}
     </SafeAreaView>
   );
 }
