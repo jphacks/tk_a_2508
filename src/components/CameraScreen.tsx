@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, StatusBar } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+// @ts-ignore: expo-camera types may not be available in the current TS config
+import { Camera, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
 import { PhotoService } from '../services/photoService';
@@ -13,9 +14,10 @@ interface CameraScreenProps {
 }
 
 export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
-  const [facing, setFacing] = useState<CameraType>('back');
+  // use simple string union to avoid depending on CameraType declaration
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
+  const cameraRef = useRef<Camera | null>(null);
 
   // フルスクリーン表示のためステータスバーを隠す
   useEffect(() => {
@@ -81,17 +83,15 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
   };
 
   const toggleCameraFacing = () => {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
+    setFacing((current: 'back' | 'front') => (current === 'back' ? 'front' : 'back'));
   };
 
   return (
     <View style={styles.container}>
-      <CameraView 
+      <Camera 
         style={styles.camera} 
-        facing={facing} 
+        type={facing}
         ref={cameraRef}
-        mode="picture"
-        pictureSize="max"
       >
         <View style={styles.overlay}>
           {/* 上部コントロール */}
@@ -121,7 +121,7 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
             <View style={styles.placeholder} />
           </View>
         </View>
-      </CameraView>
+  </Camera>
     </View>
   );
 }

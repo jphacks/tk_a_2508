@@ -10,13 +10,9 @@ import ProfileScreen from '../Profile/ProfileScreen';
 import { Photo } from '../../services/photoService';
 
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
+const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 
-type Photo = {
-  id: string;
-  url: string; // public URL
-  user_id?: string;
-  created_at?: string;
-};
+// use Photo from services/photoService
 
 export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
   const navigation = useNavigation();
@@ -86,7 +82,15 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
         if (error) {
           console.warn('supabase fetch photos error', error);
         } else if (isMounted && data) {
-          setPhotos(sortPhotos([...data], userId));
+          // normalize items to Photo interface (ensure updated_at exists)
+          const normalized: Photo[] = (data as any[]).map((d) => ({
+            id: d.id,
+            url: d.url,
+            user_id: d.user_id,
+            created_at: d.created_at,
+            updated_at: d.updated_at || d.created_at || new Date().toISOString(),
+          }));
+          setPhotos(sortPhotos(normalized, userId));
         }
 
         // subscribe to new photos

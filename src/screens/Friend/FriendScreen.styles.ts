@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import { theme } from '../../styles/theme';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export const FriendStyles = StyleSheet.create({
   container: {
@@ -129,8 +129,9 @@ export const FriendStyles = StyleSheet.create({
     fontSize: 18,
   },
   friendTaskList: {
-    flex: 1,
+    // remove flex so the list can size naturally; set a maxHeight based on window height
     width: '100%',
+    maxHeight: Math.round(height * 0.6),
     paddingBottom: 8,
   },
   friendListColumn: {

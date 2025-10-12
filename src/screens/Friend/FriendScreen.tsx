@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder } from 'react-native';
+import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder, SectionList } from 'react-native';
 import { HomeStyles } from '../HomeScreen.styles';
 import { FriendStyles as styles } from './FriendScreen.styles';
 
@@ -98,23 +98,7 @@ function TaskCard({ item }: { item: Task }) {
 }
 
 // フレンドカード: 1人分のカードに複数のタスク（縦スクロール）を内包できるようにする
-function FriendCard({ tasks, name }: { tasks: Task[]; name: string }) {
-  const width = '100%';
-  return (
-    <View style={[styles.friendCard, { width, overflow: 'visible', paddingHorizontal: 8 }]}> 
-      <Text style={styles.friendName}>{name}</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={(i) => i.id}
-        renderItem={({ item }) => <View style={{ width: '100%' }}><TaskCard item={item} /></View>}
-        showsVerticalScrollIndicator={false}
-        style={styles.friendTaskList}
-        nestedScrollEnabled={true}
-        scrollEnabled={true}
-      />
-    </View>
-  );
-}
+// Note: We render friend tasks via SectionList below to avoid nesting VirtualizedLists inside a ScrollView.
 
 // --- ダミーデータ ---
 const MY_TASKS: Task[] = [
@@ -151,43 +135,48 @@ export function FriendScreen() {
   const { myTasks, friendTasks } = useTasks();
   const windowWidth = Dimensions.get('window').width;
 
-  return (
-    <View style={styles.contentArea}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>自分のタスク</Text>
-        <View style={[styles.listRow, styles.listContent]}>
-          {myTasks.map((item) => (
-            <View key={item.id}>
-              <TaskCard item={item} />
-            </View>
-          ))}
-        </View>
-      </View>
+  // build sections: first section is my tasks, subsequent sections are per-friend
+  const friendGroups = groupFriendTasks(friendTasks);
+  const sections = [
+    { title: '自分のタスク', data: myTasks, type: 'mine' as const },
+    ...friendGroups.map((g) => ({ title: g[0].author || 'Friend', data: g, type: 'friend' as const })),
+  ];
 
-      <View style={[styles.section, styles.sectionLower]}>
-        <Text style={styles.sectionTitle}>Friend task</Text>
-        {/* Vertical centered list to match design */}
-        <View style={styles.friendListColumn}>
-          {groupFriendTasks(friendTasks).map((item) => (
-            <View key={item[0].id} style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
-                <View style={styles.threeColRow}>
-                  <View style={styles.placeholderPanel} />
-                  <View style={styles.centerWrapper}>
-                  <View style={styles.arrowLeft}>
-                    <Text style={styles.arrowText}>{'‹'}</Text>
-                  </View>
-                  <FriendCard tasks={item} name={item[0].author} />
-                  <View style={styles.arrowRight}>
-                    <Text style={styles.arrowText}>{'›'}</Text>
-                  </View>
-                </View>
-                <View style={styles.placeholderPanel} />
-              </View>
+  return (
+    <SectionList
+      sections={sections}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.contentArea}
+      showsVerticalScrollIndicator={true}
+      renderSectionHeader={({ section }) => {
+        if ((section as any).type === 'mine') {
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>自分のタスク</Text>
             </View>
-          ))}
-        </View>
-      </View>
-    </View>
+          );
+        }
+        return (
+          <View style={[styles.section, styles.sectionLower]}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+          </View>
+        );
+      }}
+      renderItem={({ item, section }) => {
+        // Display each task card centered to match previous layout
+        return (
+          <View style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
+            <View style={styles.threeColRow}>
+              <View style={styles.placeholderPanel} />
+              <View style={styles.centerWrapper}>
+                <TaskCard item={item} />
+              </View>
+              <View style={styles.placeholderPanel} />
+            </View>
+          </View>
+        );
+      }}
+    />
   );
 }
 // フレンドごとにタスクをグループ化（将来的にAPI側で grouped response を返す予定なら差し替え可能）

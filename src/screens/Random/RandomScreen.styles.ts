@@ -368,23 +368,7 @@ export const RandomStyles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  // 波状の装飾的な境界線
-  waveTop: {
-    width: '100%',
-    height: 22,
-    backgroundColor: '#bee0ff',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginBottom: -6,
-  },
-  waveBottom: {
-    width: '100%',
-    height: 26,
-    backgroundColor: '#bee0ff',
-    marginTop: 12,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
+  // 波状の装飾的な境界線 (defined earlier)
   // 写真表示用のスタイル
   photosSection: {
     width: '100%',
@@ -418,12 +402,7 @@ export const RandomStyles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
+  // profileImage defined earlier
   userName: {
     fontSize: 16,
     fontWeight: '600',
