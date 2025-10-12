@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import { supabase } from '../lib/supabase';
 
 export interface Photo {
   id: string;
@@ -14,32 +14,69 @@ export class PhotoService {
    */
   static async uploadPhoto(photoUri: string, userId: string): Promise<Photo> {
     try {
+      console.log('Starting photo upload for URI:', photoUri);
+      console.log('User ID:', userId);
+      
       // ファイル名を生成（ユニークにするため）
       const fileExt = photoUri.split('.').pop() || 'jpg';
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      console.log('Generated filename:', fileName);
       
+      // MIMEタイプを正しく設定
+      const getMimeType = (ext: string): string => {
+        const mimeTypes: { [key: string]: string } = {
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'gif': 'image/gif',
+          'webp': 'image/webp'
+        };
+        return mimeTypes[ext.toLowerCase()] || 'image/jpeg';
+      };
+      
+      const mimeType = getMimeType(fileExt);
+      console.log('MIME type:', mimeType);
+      
+      // React Native用のファイルアップロード方法
       // ファイルを読み込み
+      console.log('Fetching file from URI...');
       const response = await fetch(photoUri);
-      const blob = await response.blob();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
+      
+      console.log('Converting to ArrayBuffer...');
+      const arrayBuffer = await response.arrayBuffer();
+      console.log('ArrayBuffer size:', arrayBuffer.byteLength);
       
       // Supabase Storageにアップロード
+      console.log('Uploading to Supabase Storage...');
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(fileName, blob, {
-          contentType: `image/${fileExt}`,
+        .upload(fileName, arrayBuffer, {
+          contentType: mimeType,
           upsert: false
         });
 
       if (uploadError) {
+        console.error('Upload error details:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
+      
+      console.log('Upload successful:', uploadData);
 
       // 公開URLを取得
+      console.log('Getting public URL...');
       const { data: urlData } = supabase.storage
         .from('photos')
         .getPublicUrl(fileName);
+      console.log('Public URL:', urlData.publicUrl);
 
       // photosテーブルに記録
+      console.log('Inserting into database...');
       const { data: photoData, error: insertError } = await supabase
         .from('photos')
         .insert({
@@ -50,12 +87,15 @@ export class PhotoService {
         .single();
 
       if (insertError) {
+        console.error('Database insert error:', insertError);
         throw new Error(`Database insert failed: ${insertError.message}`);
       }
 
+      console.log('Database insert successful:', photoData);
       return photoData;
     } catch (error) {
       console.error('Photo upload error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       throw error;
     }
   }
