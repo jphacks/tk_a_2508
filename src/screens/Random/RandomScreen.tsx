@@ -7,8 +7,8 @@ import { RandomStyles } from './RandomScreen.styles';
 import { supabase } from '../../lib/supabase';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
+import { Photo } from '../../services/photoService';
 
-const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
 
 type Photo = {
@@ -232,6 +232,29 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
       setActive(target === -moveRange ? 'home' : 'friend');
     },
   })).current;
+
+  // 写真を表示するコンポーネント
+  const renderPhoto = (photo: Photo, index: number) => (
+    <View key={photo.id} style={RandomStyles.photoCard}>
+      {/* ユーザープロフィール部分 */}
+      <View style={RandomStyles.photoHeader}>
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' }} 
+          style={RandomStyles.profileImage} 
+        />
+        <Text style={RandomStyles.userName}>ユーザー</Text>
+      </View>
+      
+      {/* メイン写真 */}
+      <Image source={{ uri: photo.url }} style={RandomStyles.photo} />
+      
+      {/* いいねボタン */}
+      <TouchableOpacity style={RandomStyles.likeButton} activeOpacity={0.7}>
+        <Text style={RandomStyles.likeIcon}>❤️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
   <View style={RandomStyles.container}>
       {/* 背景グラデーション: friend のときオレンジ系に切り替える */}
@@ -392,6 +415,9 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
                 ))}
               </ScrollView>
             </View>
+            
+            {/* 波状の装飾的な境界線（下部） */}
+            <View style={RandomStyles.waveBottom} />
           </View>
         </ScrollView>
       ) : (
