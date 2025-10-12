@@ -71,6 +71,7 @@ BeRealが“今を切り取るSNS”ならLazy Bustersは“今を一緒に乗�
 - SNS疲れとは逆の体験
 「完璧な投稿」ではなく、「ゆるい達成」を共有できる文化を重視
 #### UI
+<img width="1165" height="656" alt="image" src="https://github.com/user-attachments/assets/5ec9395b-f1bd-43bc-aa00-eab073e1ac0c" />
 
   
 ### 今後の展望
