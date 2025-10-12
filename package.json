@@ -33,9 +33,9 @@
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@playwright/test": "^1.56.0",
-    "@types/react": "~19.1.10",
-    "@types/react-native": "*",
-    "babel-preset-expo": "^54.0.3",
-    "typescript": "~5.9.2"
+    "@types/react": "^19.1.10",
+    "babel-preset-expo": "^34.0.3",
+    "typescript": "^5.9.2",
+    "@types/node": "20.11.30"
   }
 }
