@@ -130,6 +130,7 @@ cd jp_hacks
 #### 🐳 Docker で自動設定される部分
 - 環境変数の読み込み機能
 - `.env` ファイルの解析
+- `app.config.js` での環境変数参照
 
 #### 📝 自分で用意する部分
 ```bash
@@ -151,6 +152,11 @@ EXPO_PUBLIC_EXPO_PROJECT_ID=your-project-id
 - **Supabase の値**: チームリーダーまたは Supabase 管理者に問い合わせ
 - **Expo Project ID**: チームメンバーに確認するか、`npx expo config --json` で確認
 - **`.env.example` は提供しません**: セキュリティのため、各メンバーが個別に設定してください
+
+**📁 設定ファイルの変更**:
+- `app.json` → `app.config.js` に変更済み
+- 環境変数が設定されていない場合は、デフォルト値が使用されます
+- セキュリティのため、本番環境では必ず環境変数を設定してください
 
 ### 3. Docker コンテナを起動
 

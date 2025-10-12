@@ -4,11 +4,27 @@ import { commonStyles } from '../styles/common';
 import { RandomScreen } from './Random/RandomScreen';
 import { PhotoModal } from '../components/PhotoModal';
 import { CameraScreen } from '../components/CameraScreen';
+import { PhotoService, Photo } from '../services/photoService';
 
 export function HomeScreen() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [hasTakenPhoto, setHasTakenPhoto] = useState(false);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 写真一覧を取得する関数
+  const fetchPhotos = async () => {
+    try {
+      setLoading(true);
+      const photosData = await PhotoService.getAllPhotos();
+      setPhotos(photosData);
+    } catch (error) {
+      console.error('写真の取得に失敗しました:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ログイン後に写真撮影モーダルを表示
   useEffect(() => {
@@ -17,6 +33,11 @@ export function HomeScreen() {
     }, 1000); // 1秒後にモーダルを表示
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // コンポーネントマウント時に写真を取得
+  useEffect(() => {
+    fetchPhotos();
   }, []);
 
   const handleTakePhoto = () => {
@@ -28,7 +49,8 @@ export function HomeScreen() {
     console.log('写真が撮影されました:', uri);
     setShowCamera(false);
     setHasTakenPhoto(true);
-    // ここで写真を保存したり、次の処理を行ったりできます
+    // 写真撮影後に一覧を更新
+    fetchPhotos();
   };
 
   const handleCloseCamera = () => {
@@ -43,9 +65,10 @@ export function HomeScreen() {
     // 写真を撮影していない場合は閉じられない
   };
 
+
   return (
     <SafeAreaView style={commonStyles.container}>
-      <RandomScreen />
+      <RandomScreen photos={photos} loading={loading} />
       
       <PhotoModal
         visible={showPhotoModal}
@@ -62,3 +85,4 @@ export function HomeScreen() {
     </SafeAreaView>
   );
 }
+

@@ -5,11 +5,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
+import { Photo } from '../../services/photoService';
 
-const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
 
-export function RandomScreen() {
+interface RandomScreenProps {
+  photos?: Photo[];
+  loading?: boolean;
+}
+
+export function RandomScreen({ photos = [], loading = false }: RandomScreenProps) {
   const [active, setActive] = useState<'home' | 'friend'>('home');
   const screenWidth = Dimensions.get('window').width;
 
@@ -148,6 +153,29 @@ export function RandomScreen() {
       setActive(target === -moveRange ? 'home' : 'friend');
     },
   })).current;
+
+  // 写真を表示するコンポーネント
+  const renderPhoto = (photo: Photo, index: number) => (
+    <View key={photo.id} style={RandomStyles.photoCard}>
+      {/* ユーザープロフィール部分 */}
+      <View style={RandomStyles.photoHeader}>
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' }} 
+          style={RandomStyles.profileImage} 
+        />
+        <Text style={RandomStyles.userName}>ユーザー</Text>
+      </View>
+      
+      {/* メイン写真 */}
+      <Image source={{ uri: photo.url }} style={RandomStyles.photo} />
+      
+      {/* いいねボタン */}
+      <TouchableOpacity style={RandomStyles.likeButton} activeOpacity={0.7}>
+        <Text style={RandomStyles.likeIcon}>❤️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={RandomStyles.container}>
       {/* 背景グラデーション */}
@@ -272,18 +300,24 @@ export function RandomScreen() {
         {/* メインコンテンツエリア */}
         {active === 'home' ? (
           <View style={RandomStyles.contentArea}>
-            <View style={RandomStyles.mainCard}>
-              <View style={RandomStyles.cardHeader}>
-                <Text style={RandomStyles.cardTitle}>今日のタスク</Text>
-                <Text style={RandomStyles.cardSubtitle}>新しいチャレンジを始めましょう！</Text>
-              </View>
-              <View style={RandomStyles.cardContent}>
-                <Image source={sampleImage} style={RandomStyles.cardImage} />
-                <TouchableOpacity style={RandomStyles.cardButton}>
-                  <Text style={RandomStyles.cardButtonText}>開始する</Text>
-                </TouchableOpacity>
-              </View>
+            {/* 波状の装飾的な境界線（上部） */}
+            <View style={RandomStyles.waveTop} />
+            
+            {/* 写真カードセクション */}
+            <View style={RandomStyles.photosSection}>
+              {loading ? (
+                <Text style={RandomStyles.loadingText}>読み込み中...</Text>
+              ) : photos.length > 0 ? (
+                <ScrollView showsVerticalScrollIndicator={false} style={RandomStyles.photosScroll}>
+                  {photos.map((photo, index) => renderPhoto(photo, index))}
+                </ScrollView>
+              ) : (
+                <Text style={RandomStyles.emptyText}>まだ写真がありません</Text>
+              )}
             </View>
+            
+            {/* 波状の装飾的な境界線（下部） */}
+            <View style={RandomStyles.waveBottom} />
           </View>
         ) : (
           <View style={{ width: screenWidth }}>
