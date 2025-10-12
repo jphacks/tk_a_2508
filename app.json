@@ -9,13 +9,5 @@
     "android": {
       "package": "com.yourorg.jphacks"
     },
-    "ios": {
-      "bundleIdentifier": "com.yourorg.jphacks"
-    },
-    "assetBundlePatterns": ["**/*"],
-    "extra": {
-      "EXPO_PUBLIC_SUPABASE_URL": "https://tpvivwfahgccinvrjmes.supabase.co",
-      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdml2d2ZhaGdjY2ludnJqbWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MjAzMjMsImV4cCI6MjA3NDk5NjMyM30.J8HXzPIBgtknzZSwy_SYiGvMMl1a36HCK2-lL4Gt1_E"
-    }
   }
 }
