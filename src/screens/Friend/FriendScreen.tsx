@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, Dimensions, Animated, PanResponder } from 'react-native';
 import { HomeStyles } from '../HomeScreen.styles';
 
 // Task 型宣言。将来SupabaseのRowに合わせて拡張しやすい形で定義しています。
@@ -44,8 +44,41 @@ export function useTasks() {
 
 // --- プレゼン用カードコンポーネント ---
 function TaskCard({ item }: { item: Task }) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const panResponder = useRef(
+    PanResponder.create({
+  // allow the card to claim responder on touch start so card swipes work
+  onStartShouldSetPanResponder: () => true,
+  // require a small horizontal move to start responding to avoid vertical scrolls
+  onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) && Math.abs(gs.dx) > 6,
+      onPanResponderMove: Animated.event([null, { dx: translateX }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gs) => {
+        const threshold = 80;
+        if (Math.abs(gs.dx) > threshold) {
+          // swipe action: slide out then back
+          Animated.timing(translateX, {
+            toValue: gs.dx > 0 ? 300 : -300,
+            duration: 180,
+            useNativeDriver: false,
+          }).start(() => {
+            Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+          });
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+        }
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminate: () => {
+        Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+      },
+    })
+  ).current;
+
   return (
-    <View style={styles.card}>
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[styles.card, { transform: [{ translateX: translateX }] }]}
+    >
       {item.image ? (
         <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
       ) : (
@@ -59,22 +92,24 @@ function TaskCard({ item }: { item: Task }) {
           <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 // フレンドカード: 1人分のカードに複数のタスク（縦スクロール）を内包できるようにする
 function FriendCard({ tasks, name }: { tasks: Task[]; name: string }) {
-  const width = Dimensions.get('window').width * 0.72;
+  const width = Math.min(360, Dimensions.get('window').width - 48);
   return (
-    <View style={[styles.friendCard, { width }]}>
+    <View style={[styles.friendCard, { width, overflow: 'visible', paddingHorizontal: 8 }]}> 
       <Text style={styles.friendName}>{name}</Text>
       <FlatList
         data={tasks}
         keyExtractor={(i) => i.id}
-        renderItem={({ item }) => <TaskCard item={item} />}
+        renderItem={({ item }) => <View style={{ width: '100%' }}><TaskCard item={item} /></View>}
         showsVerticalScrollIndicator={false}
         style={styles.friendTaskList}
+        nestedScrollEnabled={false}
+        scrollEnabled={false}
       />
     </View>
   );
@@ -113,39 +148,43 @@ const FRIEND_TASKS: Task[] = [
 
 export function FriendScreen() {
   const { myTasks, friendTasks } = useTasks();
+  const windowWidth = Dimensions.get('window').width;
 
   return (
     <View style={HomeStyles.contentArea}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>自分のタスク</Text>
-        <FlatList
-          data={myTasks}
-          keyExtractor={(i) => i.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity activeOpacity={0.8} onPress={() => { /* TODO: 詳細画面へ */ }}>
+        <View style={[styles.listRow, styles.listContent]}>
+          {myTasks.map((item) => (
+            <View key={item.id}>
               <TaskCard item={item} />
-            </TouchableOpacity>
-          )}
-        />
+            </View>
+          ))}
+        </View>
       </View>
 
       <View style={[styles.section, styles.sectionLower]}>
         <Text style={styles.sectionTitle}>Friend task</Text>
-        <FlatList
-          data={groupFriendTasks(friendTasks)}
-          keyExtractor={(i) => i[0].id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity activeOpacity={0.9}>
-              <FriendCard tasks={item} name={item[0].author} />
-            </TouchableOpacity>
-          )}
-        />
+        {/* Vertical centered list to match design */}
+        <View style={styles.friendListColumn}>
+          {groupFriendTasks(friendTasks).map((item) => (
+            <View key={item[0].id} style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
+              <View style={styles.threeColRow}>
+                <View style={styles.placeholderPanel} />
+                <View style={styles.centerWrapper}>
+                  <View style={styles.arrowLeft}>
+                    <Text style={styles.arrowText}>{'‹'}</Text>
+                  </View>
+                  <FriendCard tasks={item} name={item[0].author} />
+                  <View style={styles.arrowRight}>
+                    <Text style={styles.arrowText}>{'›'}</Text>
+                  </View>
+                </View>
+                <View style={styles.placeholderPanel} />
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -166,18 +205,24 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
-    width: 220,
-    marginRight: 14,
+    width: '100%',
+    marginRight: 0,
     backgroundColor: '#F6E8C7',
     borderRadius: 10,
     overflow: 'hidden',
     elevation: 2,
+    alignSelf: 'center',
+    marginVertical: 10,
   },
   cardImage: {
     width: '100%',
-    height: 140,
+     height: 160,
+     borderTopLeftRadius: 12,
+     borderTopRightRadius: 12,
   },
   cardImagePlaceholder: {
     backgroundColor: '#E8D3A8',
@@ -207,18 +252,91 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   friendCard: {
-    backgroundColor: '#F7E8C9',
-    borderRadius: 12,
-    padding: 10,
-    marginRight: 14,
-    height: 360,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
+    // make it visually similar to RandomStyles.mainCard
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignSelf: 'center',
   },
   friendName: {
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 12,
+    fontSize: 18,
   },
   friendTaskList: {
     flex: 1,
+    width: '100%',
+    // ensure inner list can scroll independently
+    paddingBottom: 8,
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  friendListColumn: {
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: 24,
+  },
+  threeColRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  placeholderPanel: {
+    width: '12%',
+    aspectRatio: 0.75,
+    backgroundColor: '#F6E8C7',
+    borderRadius: 8,
+  },
+  centerWrapper: {
+    width: '74%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  arrowLeft: {
+    position: 'absolute',
+    left: -18,
+    top: '45%',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  arrowRight: {
+    position: 'absolute',
+    right: -18,
+    top: '45%',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  arrowText: {
+    fontSize: 18,
+    color: '#444',
+    fontWeight: '700',
   },
 });
 
