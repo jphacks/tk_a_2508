@@ -68,7 +68,11 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={commonStyles.container}>
-      <RandomScreen isCameraOpen={showCamera} />
+      <RandomScreen 
+        isCameraOpen={showCamera} 
+        photos={photos}
+        loading={loading}
+      />
       
       <PhotoModal
         visible={showPhotoModal}

@@ -1,10 +1,9 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
-import { supabase } from '../../lib/supabase';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
 import { Photo } from '../../services/photoService';
@@ -14,10 +13,15 @@ const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0
 
 // use Photo from services/photoService
 
-export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
+interface RandomScreenProps {
+  isCameraOpen?: boolean;
+  photos?: Photo[];
+  loading?: boolean;
+}
+
+export function RandomScreen({ isCameraOpen, photos = [], loading = false }: RandomScreenProps) {
   const navigation = useNavigation();
   const [active, setActive] = useState<'home' | 'friend'>('home');
-  const [photos, setPhotos] = useState<Photo[]>([]);
   const screenWidth = Dimensions.get('window').width;
 
   // Animated value tracking horizontal scroll position
@@ -51,86 +55,6 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
     setActive(index === 0 ? 'home' : 'friend');
   };
 
-  // Fetch initial photos and subscribe to realtime INSERTs
-  useEffect(() => {
-    let isMounted = true;
-
-    const sortPhotos = (list: Photo[], currentUserId?: string) => {
-      return list.sort((a, b) => {
-        // put current user's photos first
-        if (currentUserId) {
-          const aIsMine = a.user_id === currentUserId ? 1 : 0;
-          const bIsMine = b.user_id === currentUserId ? 1 : 0;
-          if (aIsMine !== bIsMine) return bIsMine - aIsMine; // mine first
-        }
-        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return bTime - aTime; // newest first
-      });
-    };
-
-    const load = async () => {
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData?.user?.id;
-
-        // Assume a table 'photos' with columns id, url, user_id, created_at
-        const { data, error } = await supabase
-          .from('photos')
-          .select('id, url, user_id, created_at')
-          .order('created_at', { ascending: false });
-        if (error) {
-          console.warn('supabase fetch photos error', error);
-        } else if (isMounted && data) {
-          // normalize items to Photo interface (ensure updated_at exists)
-          const normalized: Photo[] = (data as any[]).map((d) => ({
-            id: d.id,
-            url: d.url,
-            user_id: d.user_id,
-            created_at: d.created_at,
-            updated_at: d.updated_at || d.created_at || new Date().toISOString(),
-          }));
-          setPhotos(sortPhotos(normalized, userId));
-        }
-
-        // subscribe to new photos
-        // Realtime subscription using Realtime v2: create a channel
-        const channel = supabase.channel('public:photos')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'photos' }, (payload: any) => {
-            const newPhoto: Photo = payload.new as Photo;
-            setPhotos((prev) => {
-              const exists = prev.find((p) => p.id === newPhoto.id);
-              const merged = exists ? prev.map((p) => (p.id === newPhoto.id ? newPhoto : p)) : [newPhoto, ...prev];
-              return sortPhotos(merged, userId);
-            });
-          })
-          .subscribe();
-
-        return () => {
-          isMounted = false;
-          try {
-            // unsubscribe (safe-guard for different supabase versions)
-            try {
-              channel.unsubscribe();
-            } catch (e) {
-              // ignore
-            }
-          } catch (e) {
-            // ignore
-          }
-        };
-      } catch (e) {
-        console.warn('error loading photos', e);
-      }
-    };
-
-    const unsubPromise = load();
-
-    return () => {
-      // if load returned cleanup, call it
-      Promise.resolve(unsubPromise).then((cleanup: any) => cleanup && cleanup());
-    };
-  }, []);
 
   // We will not use horizontal paging scroll; render pages conditionally below
 
@@ -377,46 +301,19 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
           style={{ backgroundColor: 'transparent', width: '100%' }}
         >
           <View style={RandomStyles.contentArea}>
-            <View style={RandomStyles.mainCard}>
-              <View style={RandomStyles.cardHeader}>
-                <Text style={RandomStyles.cardTitle}>今日のタスク</Text>
-                <Text style={RandomStyles.cardSubtitle}>新しいチャレンジを始めましょう！</Text>
-              </View>
-              <View style={RandomStyles.cardContent}>
-                {/* show latest photo if exists, else show neutral placeholder */}
-                {photos[0] ? (
-                  <Image source={{ uri: photos[0].url }} style={RandomStyles.cardImage} />
-                ) : (
-                  <View style={RandomStyles.cardImagePlaceholder}>
-                    <Text style={RandomStyles.placeholderText}>まだ写真がありません</Text>
-                  </View>
-                )}
-                <TouchableOpacity style={RandomStyles.cardButton}>
-                  <Text style={RandomStyles.cardButtonText}>開始する</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* thumbnail strip */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ paddingHorizontal: 12 }}>
-                {photos.map((p) => (
-                  <TouchableOpacity key={p.id} onPress={() => { /* open or focus logic */ }} style={{ marginRight: 8 }}>
-                    <Image source={{ uri: p.url }} style={{ width: 64, height: 64, borderRadius: 8 }} />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
             
-              {/* 写真カードのセクション（PhotoCard を使って縦リスト表示） */}
-              <View style={RandomStyles.photosSection}>
-                <View style={RandomStyles.photosScroll}>
-                  {photos.map((photo) => (
-                    <PhotoCard key={photo.id} photo={photo} />
-                  ))}
-                </View>
-              </View>
-
-              {/* 波状の装飾的な境界線（下部） */}
-              <View style={RandomStyles.waveBottom} />
+            {/* 写真カードのセクション（PhotoCard を使って縦リスト表示） */}
+            <View style={RandomStyles.photosScroll}>
+              {loading ? (
+                <Text style={RandomStyles.loadingText}>読み込み中...</Text>
+              ) : photos.length > 0 ? (
+                photos.map((photo) => (
+                  <PhotoCard key={photo.id} photo={photo} />
+                ))
+              ) : (
+                <Text style={RandomStyles.emptyText}>まだ写真がありません</Text>
+              )}
+            </View>
           </View>
         </ScrollView>
       ) : (

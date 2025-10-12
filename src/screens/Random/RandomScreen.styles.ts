@@ -66,64 +66,6 @@ export const RandomStyles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 30,
   },
-  mainCard: {
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
-  },
-  cardHeader: {
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A33A5',
-    marginBottom: 8,
-  },
-  cardSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 22,
-  },
-  cardContent: {
-    alignItems: 'center',
-  },
-  cardImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 15,
-    marginBottom: 20,
-  },
-  cardImagePlaceholder: {
-    width: '100%',
-    height: 200,
-    borderRadius: 15,
-    marginBottom: 20,
-    backgroundColor: '#f3f6fa',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderText: {
-    color: '#9aa7bf',
-    fontSize: 16,
-  },
-  cardButton: {
-    backgroundColor: '#1A33A5',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  cardButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   profileButton: {
     position: 'absolute',
     top: 39,
@@ -288,14 +230,6 @@ export const RandomStyles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  waveTop: {
-    width: '100%',
-    height: 22,
-    backgroundColor: '#bee0ff',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginBottom: -6,
-  },
   card: {
     width: '100%',
     maxWidth: width - 40,
@@ -318,14 +252,6 @@ export const RandomStyles = StyleSheet.create({
     borderRadius: 6,
     resizeMode: 'cover',
     opacity: 0.95,
-  },
-  waveBottom: {
-    width: '100%',
-    height: 26,
-    backgroundColor: '#bee0ff',
-    marginTop: 12,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
   },
   profileCard: {
     marginTop: 24,
@@ -383,20 +309,10 @@ export const RandomStyles = StyleSheet.create({
   },
   // 波状の装飾的な境界線 (defined earlier)
   // 写真表示用のスタイル
-  photosSection: {
-    width: '100%',
-    backgroundColor: '#e6f4ff',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: -12,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
   photosScroll: {
     flexDirection: 'column',
+    width: '100%',
+    paddingHorizontal: 16,
   },
   photoCard: {
     backgroundColor: '#fff',
