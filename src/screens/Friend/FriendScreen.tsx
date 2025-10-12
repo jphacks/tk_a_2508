@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
-import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder, SectionList } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder, SectionList, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { HomeStyles } from '../HomeScreen.styles';
 import { FriendStyles as styles } from './FriendScreen.styles';
+import { TaskModal } from '../../components/TaskModal';
 
 // Task 型宣言。将来SupabaseのRowに合わせて拡張しやすい形で定義しています。
 export type Task = {
@@ -22,6 +23,29 @@ const TaskService = {
   async fetchFriendTasks(): Promise<Task[]> {
     return Promise.resolve(FRIEND_TASKS);
   },
+  async addTask(task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> {
+    const newTask: Task = {
+      ...task,
+      id: `task_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    MY_TASKS.unshift(newTask);
+    return Promise.resolve(newTask);
+  },
+  async updateTask(task: Task): Promise<Task> {
+    const index = MY_TASKS.findIndex(t => t.id === task.id);
+    if (index !== -1) {
+      MY_TASKS[index] = task;
+    }
+    return Promise.resolve(task);
+  },
+  async deleteTask(taskId: string): Promise<void> {
+    const index = MY_TASKS.findIndex(t => t.id === taskId);
+    if (index !== -1) {
+      MY_TASKS.splice(index, 1);
+    }
+    return Promise.resolve();
+  },
 };
 
 // --- カスタムフック ---
@@ -40,11 +64,51 @@ export function useTasks() {
     return () => { mounted = false; };
   }, []);
 
-  return { myTasks, friendTasks };
+  const addTask = async (task: Omit<Task, 'id' | 'createdAt'>) => {
+    try {
+      const newTask = await TaskService.addTask(task);
+      setMyTasks(prev => [newTask, ...prev]);
+      return newTask;
+    } catch (error) {
+      console.error('Failed to add task:', error);
+      throw error;
+    }
+  };
+
+  const updateTask = async (task: Task) => {
+    try {
+      const updatedTask = await TaskService.updateTask(task);
+      setMyTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
+      return updatedTask;
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      throw error;
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    try {
+      await TaskService.deleteTask(taskId);
+      setMyTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      throw error;
+    }
+  };
+
+  return { myTasks, friendTasks, addTask, updateTask, deleteTask };
 }
 
 // --- プレゼン用カードコンポーネント ---
-function TaskCard({ item }: { item: Task }) {
+function TaskCard({ 
+  item, 
+  onEdit, 
+  onDelete 
+}: { 
+  item: Task;
+  onEdit?: (task: Task) => void;
+  onDelete?: (taskId: string) => void;
+}) {
   const translateX = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
     PanResponder.create({
@@ -75,6 +139,31 @@ function TaskCard({ item }: { item: Task }) {
     })
   ).current;
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(item);
+    }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'タスクを削除',
+      'このタスクを削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        { 
+          text: '削除', 
+          style: 'destructive',
+          onPress: () => {
+            if (onDelete) {
+              onDelete(item.id);
+            }
+          }
+        },
+      ]
+    );
+  };
+
   return (
     <Animated.View
       {...panResponder.panHandlers}
@@ -86,7 +175,23 @@ function TaskCard({ item }: { item: Task }) {
         <View style={[styles.cardImage, styles.cardImagePlaceholder]} />
       )}
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          {(onEdit || onDelete) && (
+            <View style={styles.cardActions}>
+              {onEdit && (
+                <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
+                  <Text style={styles.actionButtonText}>編集</Text>
+                </TouchableOpacity>
+              )}
+              {onDelete && (
+                <TouchableOpacity onPress={handleDelete} style={[styles.actionButton, styles.deleteButton]}>
+                  <Text style={[styles.actionButtonText, styles.deleteButtonText]}>削除</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
         {item.description ? <Text style={styles.cardDescription}>{item.description}</Text> : null}
         <View style={styles.cardFooter}>
           <Text style={styles.cardAuthor}>{item.author}</Text>
@@ -132,7 +237,9 @@ const FRIEND_TASKS: Task[] = [
 ];
 
 export function FriendScreen() {
-  const { myTasks, friendTasks } = useTasks();
+  const { myTasks, friendTasks, addTask, updateTask, deleteTask } = useTasks();
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const windowWidth = Dimensions.get('window').width;
 
   // build sections: first section is my tasks, subsequent sections are per-friend
@@ -142,41 +249,127 @@ export function FriendScreen() {
     ...friendGroups.map((g) => ({ title: g[0].author || 'Friend', data: g, type: 'friend' as const })),
   ];
 
+
+  const handleAddTask = () => {
+    setEditingTask(null);
+    setShowTaskModal(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowTaskModal(true);
+  };
+
+  const handleSaveTask = async (taskData: Omit<Task, 'id' | 'createdAt'>) => {
+    try {
+      if (editingTask) {
+        await updateTask({ ...editingTask, ...taskData });
+      } else {
+        await addTask(taskData);
+      }
+    } catch (error) {
+      Alert.alert('エラー', 'タスクの保存に失敗しました');
+    }
+  };
+
+  const handleUpdateTask = async (task: Task) => {
+    try {
+      await updateTask(task);
+    } catch (error) {
+      Alert.alert('エラー', 'タスクの更新に失敗しました');
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      Alert.alert('エラー', 'タスクの削除に失敗しました');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowTaskModal(false);
+    setEditingTask(null);
+  };
+
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.contentArea}
-      showsVerticalScrollIndicator={true}
-      renderSectionHeader={({ section }) => {
-        if ((section as any).type === 'mine') {
-          return (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>自分のタスク</Text>
-            </View>
-          );
-        }
-        return (
-          <View style={[styles.section, styles.sectionLower]}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+    <>
+      <ScrollView 
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={[styles.contentArea, { paddingBottom: 20 }]}
+      >
+        {/* 自分のタスクセクション */}
+        <View style={styles.myTasksSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>自分のタスク</Text>
+            <TouchableOpacity onPress={handleAddTask} style={styles.addButton}>
+              <Text style={styles.addButtonText}>+ 追加</Text>
+            </TouchableOpacity>
           </View>
-        );
-      }}
-      renderItem={({ item, section }) => {
-        // Display each task card centered to match previous layout
-        return (
-          <View style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
-            <View style={styles.threeColRow}>
-              <View style={styles.placeholderPanel} />
-              <View style={styles.centerWrapper}>
-                <TaskCard item={item} />
+          
+          {/* 自分のタスク一覧（横スクロール） */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScrollContent}
+            style={styles.horizontalScroll}
+          >
+            {myTasks.map((item, index) => (
+              <View key={item.id} style={styles.horizontalTaskCard}>
+                <TaskCard 
+                  item={item} 
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                />
               </View>
-              <View style={styles.placeholderPanel} />
+            ))}
+            
+            {/* タスクが空の場合の追加ボタン */}
+            {myTasks.length === 0 && (
+              <TouchableOpacity 
+                style={styles.addTaskButton}
+                onPress={handleAddTask}
+              >
+                <Text style={styles.addTaskButtonText}>+ タスクを追加</Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        </View>
+
+        {/* フレンドのタスクセクション */}
+        {friendGroups.map((group, groupIndex) => (
+          <View key={groupIndex}>
+            <View style={[styles.section, styles.sectionLower]}>
+              <Text style={styles.sectionTitle}>{group[0].author || 'Friend'}</Text>
             </View>
+            {group.map((item) => (
+              <View key={item.id} style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
+                <View style={styles.threeColRow}>
+                  <View style={styles.placeholderPanel} />
+                  <View style={styles.centerWrapper}>
+                    <TaskCard 
+                      item={item} 
+                      onEdit={undefined}
+                      onDelete={undefined}
+                    />
+                  </View>
+                  <View style={styles.placeholderPanel} />
+                </View>
+              </View>
+            ))}
           </View>
-        );
-      }}
-    />
+        ))}
+      </ScrollView>
+
+      <TaskModal
+        visible={showTaskModal}
+        onClose={handleCloseModal}
+        onSave={handleSaveTask}
+        onUpdate={handleUpdateTask}
+        editingTask={editingTask}
+      />
+    </>
   );
 }
 // フレンドごとにタスクをグループ化（将来的にAPI側で grouped response を返す予定なら差し替え可能）

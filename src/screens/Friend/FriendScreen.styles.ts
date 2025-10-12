@@ -149,7 +149,8 @@ export const FriendStyles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 2,
     alignSelf: 'center',
-    marginVertical: 10,
+    marginVertical: 0,
+    height: 200,
   },
   cardImage: {
     width: '100%',
@@ -161,8 +162,10 @@ export const FriendStyles = StyleSheet.create({
     padding: 10,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   cardDescription: {
     marginTop: 6,
@@ -180,6 +183,108 @@ export const FriendStyles = StyleSheet.create({
   cardDate: {
     fontSize: 12,
     color: '#999',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  addButton: {
+    backgroundColor: '#1A33A5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    minHeight: 40,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#f0f0f0',
+  },
+  actionButtonText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  deleteButton: {
+    backgroundColor: '#ffebee',
+  },
+  deleteButtonText: {
+    color: '#d32f2f',
+  },
+  myTasksSection: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    height: 280,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyStateSubText: {
+    fontSize: 14,
+    color: '#ccc',
+    textAlign: 'center',
+  },
+  horizontalScroll: {
+    marginTop: 12,
+    height: 240,
+  },
+  horizontalScrollContent: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  horizontalTaskCard: {
+    width: 300,
+    height: 200,
+    marginRight: 16,
+  },
+  addTaskButton: {
+    width: 200,
+    height: 200,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: '#1A33A5',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  addTaskButtonText: {
+    color: '#1A33A5',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   // end
 });
