@@ -63,43 +63,14 @@ const ProfileScreen = () => {
 
   //アイコン変更ハンドラ
   async function onChangeAvatar() {
-    // 権限リクエスト
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "権限がありません",
-        "写真ライブラリへのアクセスを許可してください。"
-      );
-      return;
-    }
-
-    // 画像選択
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (result.canceled) return;
-
-    const file = result.assets[0];
-    const ext = file.uri.split(".").pop();
-    const filePath = `${Date.now()}.${ext}`;
-
-    const response = await fetch(file.uri);
-    const blob = await response.blob();
-
-    const { error } = await supabase.storage
-      .from("avatars") // バケット名
-      .upload(filePath, blob, { contentType: "image/jpeg" });
-
-    if (error) {
-      Alert.alert("アップロード失敗", error.message);
-    } else {
-      const publicUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${filePath}`;
-      await supabase.from("profiles").update({ avatar_url: publicUrl });
-      Alert.alert("アップロード完了", "プロフィール写真を更新しました！");
+    try {
+      const newAvatarUrl = await pickAndUploadAvatar();
+      if (newAvatarUrl) {
+        setAvatarUrl(newAvatarUrl);
+        Alert.alert("アップロード完了", "プロフィール写真を更新しました！");
+      }
+    } catch (error: any) {
+      Alert.alert("アップロード失敗", error?.message || "エラーが発生しました");
     }
   }
 
@@ -110,7 +81,7 @@ const ProfileScreen = () => {
       setName(newName);
       setStatus(newStatus);
       Alert.alert("保存しました");
-    } catch (e) {
+    } catch (e: any) {
       console.log("update error:", e);
       Alert.alert("保存に失敗", e?.message ?? JSON.stringify(e));
     }
@@ -454,7 +425,7 @@ const styles = StyleSheet.create({
   taskGallery: {
     flexDirection: "row",
     flexWrap: "wrap",
-    ustifyContent: "flex-start",
+    justifyContent: "flex-start",
     paddingHorizontal: 5,
     width: "100%",
   },
