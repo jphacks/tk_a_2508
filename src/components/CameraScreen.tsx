@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'black',
+    zIndex: 99999,
   },
   camera: {
     ...StyleSheet.absoluteFillObject,
@@ -139,6 +140,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
+    zIndex: 100000,
   },
   topControls: {
     flexDirection: 'row',

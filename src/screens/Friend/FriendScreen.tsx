@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder, SectionList } from 'react-native';
 import { HomeStyles } from '../HomeScreen.styles';
+import { FriendStyles as styles } from './FriendScreen.styles';
 
 // Task 型宣言。将来SupabaseのRowに合わせて拡張しやすい形で定義しています。
 export type Task = {
@@ -44,8 +45,41 @@ export function useTasks() {
 
 // --- プレゼン用カードコンポーネント ---
 function TaskCard({ item }: { item: Task }) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const panResponder = useRef(
+    PanResponder.create({
+  // allow the card to claim responder on touch start so card swipes work
+  onStartShouldSetPanResponder: () => true,
+  // require a small horizontal move to start responding to avoid vertical scrolls
+  onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > Math.abs(gs.dy) && Math.abs(gs.dx) > 6,
+      onPanResponderMove: Animated.event([null, { dx: translateX }], { useNativeDriver: false }),
+      onPanResponderRelease: (_, gs) => {
+        const threshold = 80;
+        if (Math.abs(gs.dx) > threshold) {
+          // swipe action: slide out then back
+          Animated.timing(translateX, {
+            toValue: gs.dx > 0 ? 300 : -300,
+            duration: 180,
+            useNativeDriver: false,
+          }).start(() => {
+            Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+          });
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+        }
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminate: () => {
+        Animated.spring(translateX, { toValue: 0, useNativeDriver: false }).start();
+      },
+    })
+  ).current;
+
   return (
-    <View style={styles.card}>
+    <Animated.View
+      {...panResponder.panHandlers}
+      style={[styles.card, { transform: [{ translateX: translateX }] }]}
+    >
       {item.image ? (
         <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
       ) : (
@@ -59,26 +93,12 @@ function TaskCard({ item }: { item: Task }) {
           <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 // フレンドカード: 1人分のカードに複数のタスク（縦スクロール）を内包できるようにする
-function FriendCard({ tasks, name }: { tasks: Task[]; name: string }) {
-  const width = Dimensions.get('window').width * 0.72;
-  return (
-    <View style={[styles.friendCard, { width }]}>
-      <Text style={styles.friendName}>{name}</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={(i) => i.id}
-        renderItem={({ item }) => <TaskCard item={item} />}
-        showsVerticalScrollIndicator={false}
-        style={styles.friendTaskList}
-      />
-    </View>
-  );
-}
+// Note: We render friend tasks via SectionList below to avoid nesting VirtualizedLists inside a ScrollView.
 
 // --- ダミーデータ ---
 const MY_TASKS: Task[] = [
@@ -113,115 +133,52 @@ const FRIEND_TASKS: Task[] = [
 
 export function FriendScreen() {
   const { myTasks, friendTasks } = useTasks();
+  const windowWidth = Dimensions.get('window').width;
+
+  // build sections: first section is my tasks, subsequent sections are per-friend
+  const friendGroups = groupFriendTasks(friendTasks);
+  const sections = [
+    { title: '自分のタスク', data: myTasks, type: 'mine' as const },
+    ...friendGroups.map((g) => ({ title: g[0].author || 'Friend', data: g, type: 'friend' as const })),
+  ];
 
   return (
-    <View style={HomeStyles.contentArea}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>自分のタスク</Text>
-        <FlatList
-          data={myTasks}
-          keyExtractor={(i) => i.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity activeOpacity={0.8} onPress={() => { /* TODO: 詳細画面へ */ }}>
-              <TaskCard item={item} />
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-
-      <View style={[styles.section, styles.sectionLower]}>
-        <Text style={styles.sectionTitle}>Friend task</Text>
-        <FlatList
-          data={groupFriendTasks(friendTasks)}
-          keyExtractor={(i) => i[0].id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity activeOpacity={0.9}>
-              <FriendCard tasks={item} name={item[0].author} />
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-    </View>
+    <SectionList
+      sections={sections}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.contentArea}
+      showsVerticalScrollIndicator={true}
+      renderSectionHeader={({ section }) => {
+        if ((section as any).type === 'mine') {
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>自分のタスク</Text>
+            </View>
+          );
+        }
+        return (
+          <View style={[styles.section, styles.sectionLower]}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+          </View>
+        );
+      }}
+      renderItem={({ item, section }) => {
+        // Display each task card centered to match previous layout
+        return (
+          <View style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
+            <View style={styles.threeColRow}>
+              <View style={styles.placeholderPanel} />
+              <View style={styles.centerWrapper}>
+                <TaskCard item={item} />
+              </View>
+              <View style={styles.placeholderPanel} />
+            </View>
+          </View>
+        );
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 20,
-  },
-  sectionLower: {
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginLeft: 12,
-    marginBottom: 10,
-  },
-  listContent: {
-    paddingHorizontal: 12,
-  },
-  card: {
-    width: 220,
-    marginRight: 14,
-    backgroundColor: '#F6E8C7',
-    borderRadius: 10,
-    overflow: 'hidden',
-    elevation: 2,
-  },
-  cardImage: {
-    width: '100%',
-    height: 140,
-  },
-  cardImagePlaceholder: {
-    backgroundColor: '#E8D3A8',
-  },
-  cardBody: {
-    padding: 10,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  cardDescription: {
-    marginTop: 6,
-    color: '#666',
-  },
-  cardFooter: {
-    marginTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardAuthor: {
-    fontSize: 12,
-    color: '#444',
-  },
-  cardDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  friendCard: {
-    backgroundColor: '#F7E8C9',
-    borderRadius: 12,
-    padding: 10,
-    marginRight: 14,
-    height: 360,
-  },
-  friendName: {
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  friendTaskList: {
-    flex: 1,
-  },
-});
-
 // フレンドごとにタスクをグループ化（将来的にAPI側で grouped response を返す予定なら差し替え可能）
 function groupFriendTasks(tasks: Task[]): Task[][] {
   const map = new Map<string, Task[]>();

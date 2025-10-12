@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, Modal } from 'react-native';
 import { commonStyles } from '../styles/common';
 import { RandomScreen } from './Random/RandomScreen';
 import { PhotoModal } from '../components/PhotoModal';
@@ -68,7 +68,7 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={commonStyles.container}>
-      <RandomScreen photos={photos} loading={loading} />
+      <RandomScreen isCameraOpen={showCamera} />
       
       <PhotoModal
         visible={showPhotoModal}
@@ -76,12 +76,12 @@ export function HomeScreen() {
         onTakePhoto={handleTakePhoto}
       />
       
-      {showCamera && (
+  <Modal visible={showCamera} animationType="slide" presentationStyle="fullScreen">
         <CameraScreen
           onPhotoTaken={handlePhotoTaken}
           onClose={handleCloseCamera}
         />
-      )}
+      </Modal>
     </SafeAreaView>
   );
 }
