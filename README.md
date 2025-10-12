@@ -1,7 +1,8 @@
 
 # Lazy Busters
 
-[![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
+<img width="1633" height="918" alt="image" src="https://github.com/user-attachments/assets/920b5c4c-48e0-4158-a665-1ec9c40c88c9" />
+
 
 ## 製品概要
 「やる気ゼロでも、仲間とならできる！」

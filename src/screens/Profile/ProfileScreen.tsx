@@ -1,97 +1,224 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  ScrollView, 
-  Alert, 
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
   Dimensions,
-  SafeAreaView 
-} from 'react-native';
+  SafeAreaView,
+} from "react-native";
 
-import { Ionicons, FontAwesome } from '@expo/vector-icons'; 
-import { useNavigation } from '@react-navigation/native'; 
+import { Ionicons, FontAwesome } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import {
+  ensureProfileRow,
+  fetchMyProfile,
+  updateMyProfile,
+} from "../../lib/profile";
+import { pickAndUploadAvatar } from "../../lib/avatar";
+import avatarGirl from "../../../assets/images/image 110708.png";
+import penPhoto from "../../../assets/images/Group 1000006540.png";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const GALLERY_MARGIN = 5;
 const GALLERY_COLUMNS = 3;
-const GALLERY_SIZE = (width - 40 - (GALLERY_MARGIN * 2 * GALLERY_COLUMNS)) / GALLERY_COLUMNS; 
+const GALLERY_SIZE =
+  (width - 40 - GALLERY_MARGIN * 2 * GALLERY_COLUMNS) / GALLERY_COLUMNS;
 
-const COLOR_BLUE = '#42A5F5';
-const COLOR_ORANGE = '#FFA726';
-const COLOR_BG = '#e6f0ff'; 
+const COLOR_BLUE = "#42A5F5";
+const COLOR_ORANGE = "#FFA726";
+const COLOR_BG = "#e6f0ff";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
 
   const [profile, setProfile] = useState({
-    name: 'Lazy太郎',
-    status: 'TOEICに向けて勉強中！！',
-    avatarUrl: 'https://via.placeholder.com/150/42A5F5/FFFFFF?text=P',
+    name: "Lazy太郎",
+    status: "TOEICに向けて勉強中！！",
+    avatarUrl: "https://via.placeholder.com/150/42A5F5/FFFFFF?text=P",
     friends: 64,
     posts: 105,
   });
 
-  const [activeFilter, setActiveFilter] = useState<'random' | 'task'>('random'); 
+  const [activeFilter, setActiveFilter] = useState<"random" | "task">("random");
+  const [name, setName] = useState("Lazy太郎");
+  const [status, setStatus] = useState("TOEICに向けて勉強中！！");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const taskImages = Array(9).fill(null).map((_, i) => ({
-    id: i,
-    uri: 'https://via.placeholder.com/200x200?text=Study', 
-    date: '2025.10.11',
-  }));
+  // 初期ロード
+  useEffect(() => {
+    (async () => {
+      await ensureProfileRow();
+      const p = await fetchMyProfile();
+      if (p) {
+        setName(p.name ?? "");
+        setStatus(p.status ?? "");
+        setAvatarUrl(p.avatar_url ?? null);
+      }
+    })();
+  }, []);
+
+  //アイコン変更ハンドラ
+  async function onChangeAvatar() {
+    // 権限リクエスト
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "権限がありません",
+        "写真ライブラリへのアクセスを許可してください。"
+      );
+      return;
+    }
+
+    // 画像選択
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (result.canceled) return;
+
+    const file = result.assets[0];
+    const ext = file.uri.split(".").pop();
+    const filePath = `${Date.now()}.${ext}`;
+
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+
+    const { error } = await supabase.storage
+      .from("avatars") // バケット名
+      .upload(filePath, blob, { contentType: "image/jpeg" });
+
+    if (error) {
+      Alert.alert("アップロード失敗", error.message);
+    } else {
+      const publicUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${filePath}`;
+      await supabase.from("profiles").update({ avatar_url: publicUrl });
+      Alert.alert("アップロード完了", "プロフィール写真を更新しました！");
+    }
+  }
+
+  //名前／一言の保存
+  async function onSaveProfile(newName: string, newStatus: string) {
+    try {
+      await updateMyProfile({ name: newName, status: newStatus });
+      setName(newName);
+      setStatus(newStatus);
+      Alert.alert("保存しました");
+    } catch (e) {
+      console.log("update error:", e);
+      Alert.alert("保存に失敗", e?.message ?? JSON.stringify(e));
+    }
+  }
+
+  const taskImages = Array(9)
+    .fill(null)
+    .map((_, i) => ({
+      id: i,
+      uri: null, // ← URLを入れない（DBの写真が入ったらここにURLを入れる）
+      date: "2025.10.11",
+    }));
 
   const handleStatusEdit = () => {
     Alert.prompt(
-      'ステータスを編集',
-      '新しいステータスを入力してください',
+      "ステータスを編集",
+      "新しいステータスを入力してください",
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: "キャンセル", style: "cancel" },
         {
-          text: 'OK',
-          onPress: (newStatus: string | undefined) => { 
-            if (newStatus) { 
-              setProfile(prevProfile => ({ 
-                ...prevProfile,
-                status: newStatus,
-              }));
+          text: "OK",
+          onPress: async (newText?: string) => {
+            if (!newText) return;
+            setStatus(newText); // 画面の state を更新
+            try {
+              await updateMyProfile({ status: newText }); // すぐDBにも反映（または保存ボタンでもOK）
+              Alert.alert("更新しました");
+            } catch (e: any) {
+              console.log("update error:", e);
+              Alert.alert("保存に失敗", e?.message ?? JSON.stringify(e));
             }
           },
         },
       ],
-      'plain-text',
-      profile.status
+      "plain-text",
+      status
     );
   };
 
+  const handleNameEdit = () => {
+    Alert.prompt(
+      "名前を編集",
+      "新しい名前を入力してください",
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "OK",
+          onPress: async (newText?: string) => {
+            if (!newText) return;
+            setName(newText);
+            try {
+              await updateMyProfile({ name: newText });
+              Alert.alert("更新しました");
+            } catch (e: any) {
+              console.log("update error:", e);
+              Alert.alert("保存に失敗", e?.message ?? JSON.stringify(e));
+            }
+          },
+        },
+      ],
+      "plain-text",
+      name
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundContainer}>
-        {/* ヘッダー */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={styles.backButton}
-          >
-            <Ionicons name="chevron-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.appName}>Lazy*Busters</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          
           {/* プロフィールカード */}
           <View style={styles.profileCard}>
-            <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} /> 
-            <Text style={styles.userName}>{profile.name}</Text>
-            
-            <TouchableOpacity onPress={handleStatusEdit}>
-              <Text style={styles.statusMessage}>{profile.status}</Text> 
+            <TouchableOpacity
+              onPress={onChangeAvatar}
+              style={{ alignSelf: "center" }}
+            >
+              {/* 外側の青いリング */}
+              <View
+                style={{
+                  width: 124,
+                  height: 124,
+                  borderRadius: 62,
+                  borderWidth: 4,
+                  borderColor: "#2D8CFF",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {/* 画像を丸く切り抜く */}
+                <Image
+                  source={avatarUrl ? { uri: avatarUrl } : avatarGirl}
+                  style={{
+                    width: 116,
+                    height: 116,
+                    borderRadius: 58,
+                    overflow: "hidden",
+                  }}
+                  resizeMode="cover"
+                />
+              </View>
             </TouchableOpacity>
-            
+            <TouchableOpacity onPress={handleNameEdit}>
+              <Text style={styles.userName}>{name}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleStatusEdit}>
+              <Text style={styles.statusMessage}>{status}</Text>
+            </TouchableOpacity>
+
             {/* 設定アイコン */}
             <TouchableOpacity style={styles.settingsIcon}>
               <Ionicons name="settings-outline" size={24} color="#888" />
@@ -101,7 +228,7 @@ const ProfileScreen = () => {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <FontAwesome name="users" size={20} color="#666" />
-                <Text style={styles.statValue}>{profile.friends}</Text> 
+                <Text style={styles.statValue}>{profile.friends}</Text>
                 <Text style={styles.statLabel}>Friends</Text>
               </View>
               <View style={styles.statItem}>
@@ -110,44 +237,73 @@ const ProfileScreen = () => {
                 <Text style={styles.statLabel}>投稿</Text>
               </View>
             </View>
+            <TouchableOpacity
+              onPress={() => onSaveProfile(name, status)}
+              style={{
+                backgroundColor: COLOR_BLUE,
+                paddingVertical: 10,
+                paddingHorizontal: 30,
+                borderRadius: 25,
+                marginTop: 20,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>保存</Text>
+            </TouchableOpacity>
           </View>
 
           {/* タスクフィルターボタン */}
           <View style={styles.filterButtons}>
             {/* ランダムボタン */}
-            <TouchableOpacity 
-              onPress={() => setActiveFilter('random')}
+            <TouchableOpacity
+              onPress={() => setActiveFilter("random")}
               style={[
-                styles.filterButton, 
-                activeFilter === 'random' ? styles.filterButtonBlueActive : styles.filterButtonInactive
+                styles.filterButton,
+                activeFilter === "random"
+                  ? styles.filterButtonBlueActive
+                  : styles.filterButtonInactive,
               ]}
             >
-              <Text style={[
-                styles.filterButtonText, 
-                activeFilter !== 'random' && { color: '#666' } 
-              ]}>ランダム</Text>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  activeFilter !== "random" && { color: "#666" },
+                ]}
+              >
+                ランダム
+              </Text>
             </TouchableOpacity>
-            
+
             {/* タスクボタン */}
-            <TouchableOpacity 
-              onPress={() => setActiveFilter('task')}
+            <TouchableOpacity
+              onPress={() => setActiveFilter("task")}
               style={[
-                styles.filterButton, 
-                activeFilter === 'task' ? styles.filterButtonOrangeActive : styles.filterButtonInactive
+                styles.filterButton,
+                activeFilter === "task"
+                  ? styles.filterButtonOrangeActive
+                  : styles.filterButtonInactive,
               ]}
             >
-              <Text style={[
-                styles.filterButtonText, 
-                activeFilter !== 'task' && { color: '#666' }
-              ]}>タスク</Text>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  activeFilter !== "task" && { color: "#666" },
+                ]}
+              >
+                タスク
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* タスク履歴ギャラリー */}
+          {/* タスク履歴ギャラリー */}
           <View style={styles.taskGallery}>
-            {taskImages.map(task => (
+            {taskImages.map((task) => (
               <View key={task.id} style={styles.taskImageContainer}>
-                <Image source={{ uri: task.uri }} style={styles.taskImage} />
+                <Image
+                  source={task.uri ? { uri: task.uri } : penPhoto}
+                  style={styles.taskImage}
+                  resizeMode="cover"
+                />
                 <Text style={styles.taskImageDate}>{task.date}</Text>
               </View>
             ))}
@@ -160,104 +316,104 @@ const ProfileScreen = () => {
 
 // StyleSheetの定義はProfileScreen関数の外側に必要です
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   backgroundContainer: {
     flex: 1,
-    backgroundColor: COLOR_BG, 
+    backgroundColor: COLOR_BG,
   },
-  
+
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
   backButton: { padding: 5 },
   appName: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: COLOR_BLUE, 
-    textShadowColor: 'rgba(0,0,0,0.3)',
+    fontWeight: "bold",
+    color: COLOR_BLUE,
+    textShadowColor: "rgba(0,0,0,0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
 
   scrollContent: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingBottom: 20,
     paddingHorizontal: 10,
   },
-  
+
   profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20, 
+    backgroundColor: "#fff",
+    borderRadius: 20,
     padding: 20,
     marginTop: 20,
-    width: '95%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 }, 
+    width: "95%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 8,
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
     borderWidth: 4,
-    borderColor: COLOR_BLUE, 
+    borderColor: COLOR_BLUE,
     marginBottom: 10,
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 5,
   },
   statusMessage: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 20,
-    textDecorationLine: 'underline', 
+    textDecorationLine: "underline",
   },
   settingsIcon: {
-    position: 'absolute',
+    position: "absolute",
     top: 20,
     right: 20,
     padding: 5,
   },
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
     paddingHorizontal: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
     paddingTop: 15,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginTop: 5,
   },
   statLabel: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
 
   filterButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 25,
     marginBottom: 15,
-    width: '95%',
-    justifyContent: 'center',
+    width: "95%",
+    justifyContent: "center",
   },
   filterButton: {
     paddingVertical: 10,
@@ -265,16 +421,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     borderRadius: 25,
     minWidth: 120,
-    alignItems: 'center',
-    backgroundColor: '#fff', 
-    shadowColor: '#000',
+    alignItems: "center",
+    backgroundColor: "#fff",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   filterButtonBlueActive: {
-    backgroundColor: COLOR_BLUE, 
+    backgroundColor: COLOR_BLUE,
     shadowOpacity: 0.2,
     elevation: 5,
   },
@@ -284,38 +440,43 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   filterButtonInactive: {
-    backgroundColor: '#f0f0f0', 
+    backgroundColor: "#f0f0f0",
     shadowOpacity: 0,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
   },
   filterButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff', 
+    fontWeight: "bold",
+    color: "#fff",
   },
-  
+
   taskGallery: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', 
-    justifyContent: 'space-evenly',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    ustifyContent: "flex-start",
     paddingHorizontal: 5,
-    width: '100%',
+    width: "100%",
   },
   taskImageContainer: {
     margin: GALLERY_MARGIN,
     width: GALLERY_SIZE,
-    alignItems: 'center',
+    height: GALLERY_SIZE, // ← 高さを追加
+    borderRadius: 12, // ← 角丸は親に
+    overflow: "hidden", // ← これでハミ出し/白縁をカット
+    backgroundColor: "#fff",
   },
   taskImage: {
-    width: GALLERY_SIZE,
-    height: GALLERY_SIZE,
-    borderRadius: 10, 
-    backgroundColor: '#ddd',
+    width: "120%", // ← 親にフィット
+    height: "100%",
+    borderRadius: 0, // ← 角丸は親でやるので0
+    backgroundColor: "transparent",
+    left: 0,
+    top: 0,
   },
   taskImageDate: {
     fontSize: 11,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
 });

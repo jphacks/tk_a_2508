@@ -18,7 +18,9 @@
     "@supabase/supabase-js": "^2.75.0",
     "expo": "~54.0.0",
     "expo-camera": "^17.0.8",
+    "expo-image-picker": "~17.0.8",
     "expo-linear-gradient": "~15.0.7",
+    "expo-notifications": "~0.32.12",
     "isexe": "^2.0.0",
     "metro-minify-terser": "^0.83.3",
     "react": "19.1.0",
@@ -32,9 +34,9 @@
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@playwright/test": "^1.56.0",
-    "@types/react": "~19.1.10",
-  "@types/react-native": "*",
-    "babel-preset-expo": "^54.0.3",
-    "typescript": "~5.9.2"
+    "@types/react": "^19.1.10",
+    "babel-preset-expo": "^34.0.3",
+    "typescript": "^5.9.2",
+    "@types/node": "20.11.30"
   }
 }
