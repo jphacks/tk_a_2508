@@ -61,7 +61,7 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={LoginStyles.container}>
       {/* 背景グラデーション */}
       <LinearGradient
-        colors={["rgba(111, 191, 118, 1)", "rgba(3, 160, 229, 1)"]}
+        colors={["#DDD7FE", "#DDD7FE"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={LoginStyles.backgroundGradient}

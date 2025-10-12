@@ -92,36 +92,37 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
         ref={cameraRef}
         mode="picture"
         pictureSize="max"
-      >
-        <View style={styles.overlay}>
-          {/* 上部コントロール */}
-          <View style={styles.topControls}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 下部コントロール */}
-          <View style={styles.bottomControls}>
-            <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-              <Text style={styles.flipButtonText}>🔄</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <LinearGradient
-                colors={['rgba(55, 134, 238, 1)', 'rgba(183, 230, 255, 1)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.captureButtonGradient}
-              >
-                <View style={styles.captureButtonInner} />
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <View style={styles.placeholder} />
-          </View>
+      />
+      
+      {/* オーバーレイを絶対配置で表示 */}
+      <View style={styles.overlay}>
+        {/* 上部コントロール */}
+        <View style={styles.topControls}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>×</Text>
+          </TouchableOpacity>
         </View>
-      </CameraView>
+
+        {/* 下部コントロール */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+            <Text style={styles.flipButtonText}>🔄</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+            <LinearGradient
+              colors={['rgba(55, 134, 238, 1)', 'rgba(183, 230, 255, 1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.captureButtonGradient}
+            >
+              <View style={styles.captureButtonInner} />
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          <View style={styles.placeholder} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
   },
