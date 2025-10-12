@@ -58,7 +58,6 @@ export function TaskModal({
       title: title.trim(),
       description: description.trim(),
       author: author.trim(),
-      image: require('../../assets/profile.webp'), // デフォルト画像
     };
 
     if (editingTask && onUpdate) {

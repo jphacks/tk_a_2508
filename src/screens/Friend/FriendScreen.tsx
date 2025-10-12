@@ -177,20 +177,14 @@ function TaskCard({
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{item.title}</Text>
-          {(onEdit || onDelete) && (
-            <View style={styles.cardActions}>
-              {onEdit && (
-                <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>編集</Text>
-                </TouchableOpacity>
-              )}
-              {onDelete && (
-                <TouchableOpacity onPress={handleDelete} style={[styles.actionButton, styles.deleteButton]}>
-                  <Text style={[styles.actionButtonText, styles.deleteButtonText]}>削除</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+          <View style={styles.cardActions}>
+            <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>編集</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete} style={[styles.actionButton, styles.deleteButton]}>
+              <Text style={[styles.actionButtonText, styles.deleteButtonText]}>削除</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         {item.description ? <Text style={styles.cardDescription}>{item.description}</Text> : null}
         <View style={styles.cardFooter}>
@@ -300,42 +294,31 @@ export function FriendScreen() {
         contentContainerStyle={[styles.contentArea, { paddingBottom: 20 }]}
       >
         {/* 自分のタスクセクション */}
-        <View style={styles.myTasksSection}>
+        <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>自分のタスク</Text>
             <TouchableOpacity onPress={handleAddTask} style={styles.addButton}>
               <Text style={styles.addButtonText}>+ 追加</Text>
             </TouchableOpacity>
           </View>
-          
-          {/* 自分のタスク一覧（横スクロール） */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScrollContent}
-            style={styles.horizontalScroll}
-          >
-            {myTasks.map((item, index) => (
-              <View key={item.id} style={styles.horizontalTaskCard}>
+        </View>
+        
+        {/* 自分のタスク一覧 */}
+        {myTasks.map((item) => (
+          <View key={item.id} style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
+            <View style={styles.threeColRow}>
+              <View style={styles.placeholderPanel} />
+              <View style={styles.centerWrapper}>
                 <TaskCard 
                   item={item} 
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTask}
                 />
               </View>
-            ))}
-            
-            {/* タスクが空の場合の追加ボタン */}
-            {myTasks.length === 0 && (
-              <TouchableOpacity 
-                style={styles.addTaskButton}
-                onPress={handleAddTask}
-              >
-                <Text style={styles.addTaskButtonText}>+ タスクを追加</Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
-        </View>
+              <View style={styles.placeholderPanel} />
+            </View>
+          </View>
+        ))}
 
         {/* フレンドのタスクセクション */}
         {friendGroups.map((group, groupIndex) => (
