@@ -8,9 +8,9 @@ import { supabase } from '../../lib/supabase';
 import { FriendScreen } from '../Friend/FriendScreen';
 import ProfileScreen from '../Profile/ProfileScreen';
 import { Photo } from '../../services/photoService';
+import { PhotoCard } from '../../components/PhotoCard';
 
 const profileImage = { uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' };
-const sampleImage = { uri: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&q=80&auto=format&fit=crop' };
 
 // use Photo from services/photoService
 
@@ -237,27 +237,7 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
     },
   })).current;
 
-  // 写真を表示するコンポーネント
-  const renderPhoto = (photo: Photo, index: number) => (
-    <View key={photo.id} style={RandomStyles.photoCard}>
-      {/* ユーザープロフィール部分 */}
-      <View style={RandomStyles.photoHeader}>
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80&auto=format&fit=crop&crop=face' }} 
-          style={RandomStyles.profileImage} 
-        />
-        <Text style={RandomStyles.userName}>ユーザー</Text>
-      </View>
-      
-      {/* メイン写真 */}
-      <Image source={{ uri: photo.url }} style={RandomStyles.photo} />
-      
-      {/* いいねボタン */}
-      <TouchableOpacity style={RandomStyles.likeButton} activeOpacity={0.7}>
-        <Text style={RandomStyles.likeIcon}>❤️</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // 写真カードは PhotoCard コンポーネントに切り出しました
 
   return (
   <View style={RandomStyles.container}>
@@ -296,7 +276,7 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
             <Animated.View style={[RandomStyles.pillBgLayer, { backgroundColor: '#ffb56b', opacity: indicatorX.interpolate({ inputRange: [-moveRange, moveRange], outputRange: [0, 1], extrapolate: 'clamp' }) }]} />
             {/* original decorative gradient overlaid for texture */}
             <LinearGradient
-              colors={['rgba(10, 172, 228, 0.15)', 'rgba(11, 110, 221, 0.15)']}
+              colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={RandomStyles.pillGradient}
@@ -403,8 +383,14 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
                 <Text style={RandomStyles.cardSubtitle}>新しいチャレンジを始めましょう！</Text>
               </View>
               <View style={RandomStyles.cardContent}>
-                {/* show latest photo (photos[0]) if exists, else fallback to sampleImage */}
-                <Image source={photos[0] ? { uri: photos[0].url } : sampleImage} style={RandomStyles.cardImage} />
+                {/* show latest photo if exists, else show neutral placeholder */}
+                {photos[0] ? (
+                  <Image source={{ uri: photos[0].url }} style={RandomStyles.cardImage} />
+                ) : (
+                  <View style={RandomStyles.cardImagePlaceholder}>
+                    <Text style={RandomStyles.placeholderText}>まだ写真がありません</Text>
+                  </View>
+                )}
                 <TouchableOpacity style={RandomStyles.cardButton}>
                   <Text style={RandomStyles.cardButtonText}>開始する</Text>
                 </TouchableOpacity>
@@ -420,8 +406,17 @@ export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
               </ScrollView>
             </View>
             
-            {/* 波状の装飾的な境界線（下部） */}
-            <View style={RandomStyles.waveBottom} />
+              {/* 写真カードのセクション（PhotoCard を使って縦リスト表示） */}
+              <View style={RandomStyles.photosSection}>
+                <View style={RandomStyles.photosScroll}>
+                  {photos.map((photo) => (
+                    <PhotoCard key={photo.id} photo={photo} />
+                  ))}
+                </View>
+              </View>
+
+              {/* 波状の装飾的な境界線（下部） */}
+              <View style={RandomStyles.waveBottom} />
           </View>
         </ScrollView>
       ) : (

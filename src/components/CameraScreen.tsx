@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, StatusBar } from 'react-native';
-// @ts-ignore: expo-camera types may not be available in the current TS config
-import { Camera, useCameraPermissions } from 'expo-camera';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
 import { PhotoService } from '../services/photoService';
@@ -14,10 +13,9 @@ interface CameraScreenProps {
 }
 
 export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
-  // use simple string union to avoid depending on CameraType declaration
-  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<Camera | null>(null);
+  const cameraRef = useRef<CameraView>(null);
 
   // フルスクリーン表示のためステータスバーを隠す
   useEffect(() => {
@@ -83,45 +81,48 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
   };
 
   const toggleCameraFacing = () => {
-    setFacing((current: 'back' | 'front') => (current === 'back' ? 'front' : 'back'));
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
   };
 
   return (
     <View style={styles.container}>
-      <Camera 
+      <CameraView 
         style={styles.camera} 
-        type={facing}
+        facing={facing} 
         ref={cameraRef}
-      >
-        <View style={styles.overlay}>
-          {/* 上部コントロール */}
-          <View style={styles.topControls}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 下部コントロール */}
-          <View style={styles.bottomControls}>
-            <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-              <Text style={styles.flipButtonText}>🔄</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <LinearGradient
-                colors={['rgba(55, 134, 238, 1)', 'rgba(183, 230, 255, 1)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.captureButtonGradient}
-              >
-                <View style={styles.captureButtonInner} />
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <View style={styles.placeholder} />
-          </View>
+        mode="picture"
+        pictureSize="max"
+      />
+      
+      {/* オーバーレイを絶対配置で表示 */}
+      <View style={styles.overlay}>
+        {/* 上部コントロール */}
+        <View style={styles.topControls}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>×</Text>
+          </TouchableOpacity>
         </View>
-  </Camera>
+
+        {/* 下部コントロール */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+            <Text style={styles.flipButtonText}>🔄</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+            <LinearGradient
+              colors={['rgba(55, 134, 238, 1)', 'rgba(183, 230, 255, 1)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.captureButtonGradient}
+            >
+              <View style={styles.captureButtonInner} />
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          <View style={styles.placeholder} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -130,14 +131,16 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'black',
+    zIndex: 99999,
   },
   camera: {
     ...StyleSheet.absoluteFillObject,
   },
   overlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
+    zIndex: 100000,
   },
   topControls: {
     flexDirection: 'row',

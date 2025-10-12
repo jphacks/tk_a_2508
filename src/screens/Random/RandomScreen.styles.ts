@@ -100,6 +100,19 @@ export const RandomStyles = StyleSheet.create({
     borderRadius: 15,
     marginBottom: 20,
   },
+  cardImagePlaceholder: {
+    width: '100%',
+    height: 200,
+    borderRadius: 15,
+    marginBottom: 20,
+    backgroundColor: '#f3f6fa',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: '#9aa7bf',
+    fontSize: 16,
+  },
   cardButton: {
     backgroundColor: '#1A33A5',
     paddingHorizontal: 30,
