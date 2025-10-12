@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Animated, PanResponder } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +19,7 @@ type Photo = {
 };
 
 export function RandomScreen() {
+  const navigation = useNavigation();
   const [active, setActive] = useState<'home' | 'friend'>('home');
   const [photos, setPhotos] = useState<Photo[]>([]);
   const screenWidth = Dimensions.get('window').width;
@@ -243,8 +245,9 @@ export function RandomScreen() {
       <ScrollView 
         contentContainerStyle={RandomStyles.scrollContent} 
         showsVerticalScrollIndicator={false} 
-        nestedScrollEnabled={true} 
+        nestedScrollEnabled={false} 
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={active !== 'friend'}
         style={{ backgroundColor: 'transparent' }}
       >
         {/* ヘッダーエリア */}
@@ -384,7 +387,7 @@ export function RandomScreen() {
         )}
         
         {/* プロフィール画像（右下固定） */}
-        <TouchableOpacity style={RandomStyles.profileButton}>
+        <TouchableOpacity style={RandomStyles.profileButton} onPress={() => navigation.navigate('Profile' as never)}>
           <Image source={profileImage} style={RandomStyles.profileButtonImage} />
         </TouchableOpacity>
       </ScrollView>
