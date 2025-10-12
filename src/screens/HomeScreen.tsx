@@ -1,91 +1,92 @@
-import React, { useState } from 'react';
-import { SafeAreaView, View, TouchableOpacity, Text } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, Modal } from 'react-native';
 import { commonStyles } from '../styles/common';
 import { RandomScreen } from './Random/RandomScreen';
-import { TaskScreen } from './Task/TaskScreen';
-import { FriendScreen } from './Friend/FriendScreen';
-import { HomeStyles } from './HomeScreen.styles';
+import { PhotoModal } from '../components/PhotoModal';
+import { CameraScreen } from '../components/CameraScreen';
+import { PhotoService, Photo } from '../services/photoService';
 
-type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
+export function HomeScreen() {
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasTakenPhoto, setHasTakenPhoto] = useState(false);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(false);
 
-type TabType = 'random' | 'task' | 'friend';
-
-export function HomeScreen({ navigation }: HomeScreenProps) {
-  // 🧪 テスト用: 新しい画面を表示したい場合は以下を変更
-  // const [activeTab, setActiveTab] = useState<TabType>('random');
-  const [activeTab, setActiveTab] = useState<TabType>('random');
-  // 例: const [activeTab, setActiveTab] = useState<TabType>('newscreen');
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'random':
-        return <RandomScreen />;
-      case 'task':
-        return <TaskScreen />;
-      case 'friend':
-        return <FriendScreen />;
-      default:
-        return <RandomScreen />;
+  // 写真一覧を取得する関数
+  const fetchPhotos = async () => {
+    try {
+      setLoading(true);
+      const photosData = await PhotoService.getAllPhotos();
+      setPhotos(photosData);
+    } catch (error) {
+      console.error('写真の取得に失敗しました:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ログイン後に写真撮影モーダルを表示
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPhotoModal(true);
+    }, 1000); // 1秒後にモーダルを表示
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // コンポーネントマウント時に写真を取得
+  useEffect(() => {
+    fetchPhotos();
+  }, []);
+
+  const handleTakePhoto = () => {
+    setShowPhotoModal(false);
+    setShowCamera(true);
+  };
+
+  const handlePhotoTaken = (uri: string) => {
+    console.log('写真が撮影されました:', uri);
+    setShowCamera(false);
+    setHasTakenPhoto(true);
+    // 写真撮影後に一覧を更新
+    fetchPhotos();
+  };
+
+  const handleCloseCamera = () => {
+    setShowCamera(false);
+    setShowPhotoModal(true);
+  };
+
+  const handleCloseModal = () => {
+    if (hasTakenPhoto) {
+      setShowPhotoModal(false);
+    }
+    // 写真を撮影していない場合は閉じられない
+  };
+
+
   return (
     <SafeAreaView style={commonStyles.container}>
-      {/* タブバー */}
-      <View style={HomeStyles.tabBar}>
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'random' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('random')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'random' && HomeStyles.activeTabButtonText
-          ]}>
-            ランダム
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'task' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('task')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'task' && HomeStyles.activeTabButtonText
-          ]}>
-            タスク
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            HomeStyles.tabButton,
-            activeTab === 'friend' && HomeStyles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('friend')}
-        >
-          <Text style={[
-            HomeStyles.tabButtonText,
-            activeTab === 'friend' && HomeStyles.activeTabButtonText
-          ]}>
-            フレンド
-          </Text>
-        </TouchableOpacity>
-
-      </View>
-
-      {/* コンテンツエリア */}
-      <View style={HomeStyles.contentArea}>
-        {renderContent()}
-      </View>
+      <RandomScreen 
+        isCameraOpen={showCamera} 
+        photos={photos}
+        loading={loading}
+      />
+      
+      <PhotoModal
+        visible={showPhotoModal}
+        onClose={handleCloseModal}
+        onTakePhoto={handleTakePhoto}
+      />
+      
+  <Modal visible={showCamera} animationType="slide" presentationStyle="fullScreen">
+        <CameraScreen
+          onPhotoTaken={handlePhotoTaken}
+          onClose={handleCloseCamera}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
+
