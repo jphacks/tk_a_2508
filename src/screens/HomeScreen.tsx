@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native';
 import { commonStyles } from '../styles/common';
 import { RandomScreen } from './Random/RandomScreen';
 import { PhotoModal } from '../components/PhotoModal';
