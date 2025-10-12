@@ -18,7 +18,7 @@ type Photo = {
   created_at?: string;
 };
 
-export function RandomScreen() {
+export function RandomScreen({ isCameraOpen }: { isCameraOpen?: boolean }) {
   const navigation = useNavigation();
   const [active, setActive] = useState<'home' | 'friend'>('home');
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -152,7 +152,7 @@ export function RandomScreen() {
     },
     onMoveShouldSetPanResponder: (_, gestureState) => {
       // 横方向の移動が縦方向より大きい場合のみ反応
-      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
+      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 18;
     },
     onPanResponderGrant: () => {
       // lift and slightly scale indicator for feedback
@@ -192,7 +192,7 @@ export function RandomScreen() {
     onPanResponderRelease: (_, gestureState) => {
       const dx = gestureState.dx;
       const current = currentIndicatorX.current;
-      const threshold = 8; // px - より敏感に
+    const threshold = 20; // px - 感度を下げてより大きく動かす必要あり
       
       let target: number;
       
@@ -233,102 +233,106 @@ export function RandomScreen() {
     },
   })).current;
   return (
-    <View style={RandomStyles.container}>
-      {/* 背景グラデーション */}
+  <View style={RandomStyles.container}>
+      {/* 背景グラデーション: friend のときオレンジ系に切り替える */}
       <LinearGradient
-        colors={['rgba(3, 160, 229, 1)', 'rgba(8, 110, 255, 1)', 'rgba(3, 160, 229, 1)']}
+        colors={active === 'friend'
+          ? ['#ffdca8', '#ffb56b']
+          : ['rgba(3, 160, 229, 1)', 'rgba(8, 110, 255, 1)', 'rgba(3, 160, 229, 1)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={RandomStyles.backgroundGradient}
       />
       
-      <ScrollView 
-        contentContainerStyle={RandomStyles.scrollContent} 
-        showsVerticalScrollIndicator={false} 
-        nestedScrollEnabled={false} 
-        keyboardShouldPersistTaps="handled"
-        scrollEnabled={active !== 'friend'}
-        style={{ backgroundColor: 'transparent' }}
-      >
-        {/* ヘッダーエリア */}
-        <View style={RandomStyles.header}>
-          <View style={RandomStyles.logoContainer}>
-            <Image 
-              source={require('../../../assets/images/material-symbols_person-add.png')} 
-              style={RandomStyles.personAddIcon}
-              resizeMode="contain"
-            />
-            <Image 
-              source={require('../../../assets/Group 1000006493.png')} 
-              style={RandomStyles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
+      {/* ヘッダーエリア */}
+      <View style={RandomStyles.header}>
+        <View style={RandomStyles.logoContainer}>
+          <Image 
+            source={require('../../../assets/images/material-symbols_person-add.png')} 
+            style={RandomStyles.personAddIcon}
+            resizeMode="contain"
+          />
+          <Image 
+            source={require('../../../assets/Group 1000006493.png')} 
+            style={RandomStyles.logoImage}
+            resizeMode="contain"
+          />
         </View>
+      </View>
 
+      {/* hide pill when camera overlay is open to avoid overlap */}
+      {!isCameraOpen && (
         <View style={RandomStyles.pillWrap}>
           <View style={RandomStyles.pill}>
-            {/* ピルボタンの背景グラデーション */}
+            {/* pill background layers that blend based on indicatorX */}
+            <Animated.View style={[RandomStyles.pillBgLayer, { backgroundColor: '#0AA7E8', opacity: indicatorX.interpolate({ inputRange: [-moveRange, moveRange], outputRange: [1, 0], extrapolate: 'clamp' }) }]} />
+            <Animated.View style={[RandomStyles.pillBgLayer, { backgroundColor: '#ffb56b', opacity: indicatorX.interpolate({ inputRange: [-moveRange, moveRange], outputRange: [0, 1], extrapolate: 'clamp' }) }]} />
+            {/* original decorative gradient overlaid for texture */}
             <LinearGradient
-              colors={['rgba(10, 172, 228, 1)', 'rgba(11, 110, 221, 1)']}
+              colors={['rgba(10, 172, 228, 0.15)', 'rgba(11, 110, 221, 0.15)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={RandomStyles.pillGradient}
             />
-            {/* Animated indicator (white circle) that moves left/right with scroll */}
-            {/* ripples behind indicator */}
-            <Animated.View
-              style={[
-                RandomStyles.ripple,
-                {
-                  transform: [
-                    { translateX: Animated.add(indicatorX, sideOffset) },
-                    { scale: ripple1.interpolate({ inputRange: [0, 1], outputRange: [0.6, 2.2] }) },
-                  ],
-                  opacity: ripple1.interpolate({ inputRange: [0, 1], outputRange: [0, 0.45] }),
-                },
-              ]}
-            />
-            <Animated.View
-              style={[
-                RandomStyles.ripple,
-                {
-                  transform: [
-                    { translateX: Animated.add(indicatorX, sideOffset) },
-                    { scale: ripple2.interpolate({ inputRange: [0, 1], outputRange: [0.6, 2.6] }) },
-                  ],
-                  opacity: ripple2.interpolate({ inputRange: [0, 1], outputRange: [0, 0.32] }),
-                },
-              ]}
-            />
-            <Animated.View
-              style={[
-                RandomStyles.ripple,
-                {
-                  transform: [
-                    { translateX: Animated.add(indicatorX, sideOffset) },
-                    { scale: ripple3.interpolate({ inputRange: [0, 1], outputRange: [0.6, 3.0] }) },
-                  ],
-                  opacity: ripple3.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }),
-                },
-              ]}
-            />
+          {/* Animated indicator (white circle) that moves left/right with scroll */}
+          {/* ripples behind indicator */}
+          <Animated.View
+            style={[
+              RandomStyles.ripple,
+              {
+                transform: [
+                  { translateX: Animated.add(indicatorX, sideOffset) },
+                  { scale: ripple1.interpolate({ inputRange: [0, 1], outputRange: [0.6, 2.2] }) },
+                ],
+                opacity: ripple1.interpolate({ inputRange: [0, 1], outputRange: [0, 0.45] }),
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              RandomStyles.ripple,
+              {
+                transform: [
+                  { translateX: Animated.add(indicatorX, sideOffset) },
+                  { scale: ripple2.interpolate({ inputRange: [0, 1], outputRange: [0.6, 2.6] }) },
+                ],
+                opacity: ripple2.interpolate({ inputRange: [0, 1], outputRange: [0, 0.32] }),
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              RandomStyles.ripple,
+              {
+                transform: [
+                  { translateX: Animated.add(indicatorX, sideOffset) },
+                  { scale: ripple3.interpolate({ inputRange: [0, 1], outputRange: [0.6, 3.0] }) },
+                ],
+                opacity: ripple3.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }),
+              },
+            ]}
+          />
 
-            <Animated.View
-              {...panResponder.panHandlers}
-              style={[
-                RandomStyles.animatedIndicator,
-                {
-                  transform: [
-                    {
-                      translateX: indicatorX,
-                    },
-                    { translateY: indicatorLift },
-                    { scale: indicatorScale },
-                  ],
-                },
-              ]}
-            >
+          <Animated.View
+            {...panResponder.panHandlers}
+            style={[
+              RandomStyles.animatedIndicator,
+              {
+                transform: [
+                  {
+                    translateX: indicatorX,
+                  },
+                  { translateY: indicatorLift },
+                  { scale: indicatorScale },
+                ],
+              },
+            ]}
+          >
+            {/* background layers that blend based on drag position */}
+            <Animated.View style={[RandomStyles.animatedIndicatorBg, { backgroundColor: '#1AA0E5', opacity: indicatorX.interpolate({ inputRange: [-moveRange, moveRange], outputRange: [1, 0], extrapolate: 'clamp' }) }]} />
+            <Animated.View style={[RandomStyles.animatedIndicatorBg, { backgroundColor: '#ffb56b', opacity: indicatorX.interpolate({ inputRange: [-moveRange, moveRange], outputRange: [0, 1], extrapolate: 'clamp' }) }]} />
+
+            <View style={RandomStyles.indicatorInner}>
               {/* Active icon image inside the white indicator - crossfade based on indicatorX */}
               <Animated.Image
                 source={require('../../../assets/icon-home.png')}
@@ -349,13 +353,22 @@ export function RandomScreen() {
                   },
                 ]}
               />
-            </Animated.View>
-            {/* Tap handlers removed — drag-only control */}
+            </View>
+          </Animated.View>
+          {/* Tap handlers removed — drag-only control */}
           </View>
         </View>
+      )}
 
-        {/* メインコンテンツエリア */}
-        {active === 'home' ? (
+          {/* メインコンテンツエリア */}
+      {active === 'home' ? (
+        <ScrollView 
+          contentContainerStyle={RandomStyles.scrollContent} 
+          showsVerticalScrollIndicator={false} 
+          nestedScrollEnabled={true} 
+          keyboardShouldPersistTaps="handled"
+          style={{ backgroundColor: 'transparent', width: '100%' }}
+        >
           <View style={RandomStyles.contentArea}>
             <View style={RandomStyles.mainCard}>
               <View style={RandomStyles.cardHeader}>
@@ -380,17 +393,19 @@ export function RandomScreen() {
               </ScrollView>
             </View>
           </View>
-        ) : (
-          <View style={{ width: screenWidth }}>
-            <FriendScreen />
-          </View>
-        )}
-        
-        {/* プロフィール画像（右下固定） */}
+        </ScrollView>
+      ) : (
+        <View style={{ width: '100%' }}>
+          <FriendScreen />
+        </View>
+      )}
+
+      {/* プロフィール画像（右下固定） - カメラ開いてるときは隠す */}
+      {!isCameraOpen && (
         <TouchableOpacity style={RandomStyles.profileButton} onPress={() => navigation.navigate('Profile' as never)}>
           <Image source={profileImage} style={RandomStyles.profileButtonImage} />
         </TouchableOpacity>
-      </ScrollView>
+      )}
     </View>
   );
 }

@@ -7,9 +7,11 @@ export const RandomStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: theme.spacing.lg,
+    // avoid horizontal padding at the root to prevent children (which may use window-based widths)
+    // from collectively exceeding the screen width and causing horizontal scroll.
+    paddingVertical: theme.spacing.lg,
     justifyContent: "center",
-    alignItems: "center",
+    alignItems: "stretch",
     position: 'relative',
   },
   backgroundGradient: {
@@ -41,7 +43,7 @@ export const RandomStyles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     position: 'relative',
   },
   personAddIcon: {
@@ -53,7 +55,7 @@ export const RandomStyles = StyleSheet.create({
     left: 20,
   },
   logoImage: {
-    width: 200,
+    maxWidth: '70%',
     height: 50,
     resizeMode: 'contain',
     backgroundColor: 'transparent',
@@ -162,12 +164,16 @@ export const RandomStyles = StyleSheet.create({
     bottom: 0,
     borderRadius: 30,
   },
+  pillBgLayer: {
+    ...StyleSheet.absoluteFillObject as any,
+    borderRadius: 30,
+  },
   animatedIndicator: {
     position: 'absolute',
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     left: 76,
     top: 6,
     justifyContent: 'center',
@@ -178,6 +184,23 @@ export const RandomStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
     zIndex: 10,
+  },
+  animatedIndicatorBg: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 24,
+  },
+  indicatorInner: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   ripple: {
     position: 'absolute',
@@ -261,7 +284,8 @@ export const RandomStyles = StyleSheet.create({
     marginBottom: -6,
   },
   card: {
-    width: width - 40,
+    width: '100%',
+    maxWidth: width - 40,
     height: 220,
     backgroundColor: '#e6f4ff',
     marginTop: -12,
@@ -292,7 +316,8 @@ export const RandomStyles = StyleSheet.create({
   },
   profileCard: {
     marginTop: 24,
-    width: width - 40,
+    width: '100%',
+    maxWidth: width - 40,
     backgroundColor: '#eaf8ff',
     padding: 12,
     borderRadius: 12,
@@ -343,4 +368,5 @@ export const RandomStyles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+  // end
 });

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, Dimensions, Animated, PanResponder } from 'react-native';
+import { View, Text, Image, FlatList, Dimensions, Animated, PanResponder } from 'react-native';
 import { HomeStyles } from '../HomeScreen.styles';
+import { FriendStyles as styles } from './FriendScreen.styles';
 
 // Task 型宣言。将来SupabaseのRowに合わせて拡張しやすい形で定義しています。
 export type Task = {
@@ -98,7 +99,7 @@ function TaskCard({ item }: { item: Task }) {
 
 // フレンドカード: 1人分のカードに複数のタスク（縦スクロール）を内包できるようにする
 function FriendCard({ tasks, name }: { tasks: Task[]; name: string }) {
-  const width = Math.min(360, Dimensions.get('window').width - 48);
+  const width = '100%';
   return (
     <View style={[styles.friendCard, { width, overflow: 'visible', paddingHorizontal: 8 }]}> 
       <Text style={styles.friendName}>{name}</Text>
@@ -108,8 +109,8 @@ function FriendCard({ tasks, name }: { tasks: Task[]; name: string }) {
         renderItem={({ item }) => <View style={{ width: '100%' }}><TaskCard item={item} /></View>}
         showsVerticalScrollIndicator={false}
         style={styles.friendTaskList}
-        nestedScrollEnabled={false}
-        scrollEnabled={false}
+        nestedScrollEnabled={true}
+        scrollEnabled={true}
       />
     </View>
   );
@@ -151,7 +152,7 @@ export function FriendScreen() {
   const windowWidth = Dimensions.get('window').width;
 
   return (
-    <View style={HomeStyles.contentArea}>
+    <View style={styles.contentArea}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>自分のタスク</Text>
         <View style={[styles.listRow, styles.listContent]}>
@@ -169,9 +170,9 @@ export function FriendScreen() {
         <View style={styles.friendListColumn}>
           {groupFriendTasks(friendTasks).map((item) => (
             <View key={item[0].id} style={{ marginBottom: 18, alignItems: 'center', width: '100%' }}>
-              <View style={styles.threeColRow}>
-                <View style={styles.placeholderPanel} />
-                <View style={styles.centerWrapper}>
+                <View style={styles.threeColRow}>
+                  <View style={styles.placeholderPanel} />
+                  <View style={styles.centerWrapper}>
                   <View style={styles.arrowLeft}>
                     <Text style={styles.arrowText}>{'‹'}</Text>
                   </View>
@@ -189,157 +190,6 @@ export function FriendScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 20,
-  },
-  sectionLower: {
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginLeft: 12,
-    marginBottom: 10,
-  },
-  listContent: {
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    width: '100%',
-    marginRight: 0,
-    backgroundColor: '#F6E8C7',
-    borderRadius: 10,
-    overflow: 'hidden',
-    elevation: 2,
-    alignSelf: 'center',
-    marginVertical: 10,
-  },
-  cardImage: {
-    width: '100%',
-     height: 160,
-     borderTopLeftRadius: 12,
-     borderTopRightRadius: 12,
-  },
-  cardImagePlaceholder: {
-    backgroundColor: '#E8D3A8',
-  },
-  cardBody: {
-    padding: 10,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  cardDescription: {
-    marginTop: 6,
-    color: '#666',
-  },
-  cardFooter: {
-    marginTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardAuthor: {
-    fontSize: 12,
-    color: '#444',
-  },
-  cardDate: {
-    fontSize: 12,
-    color: '#999',
-  },
-  friendCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    // make it visually similar to RandomStyles.mainCard
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    alignSelf: 'center',
-  },
-  friendName: {
-    fontWeight: '700',
-    marginBottom: 12,
-    fontSize: 18,
-  },
-  friendTaskList: {
-    flex: 1,
-    width: '100%',
-    // ensure inner list can scroll independently
-    paddingBottom: 8,
-  },
-  listRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  friendListColumn: {
-    width: '100%',
-    alignItems: 'center',
-    paddingBottom: 24,
-  },
-  threeColRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  placeholderPanel: {
-    width: '12%',
-    aspectRatio: 0.75,
-    backgroundColor: '#F6E8C7',
-    borderRadius: 8,
-  },
-  centerWrapper: {
-    width: '74%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  arrowLeft: {
-    position: 'absolute',
-    left: -18,
-    top: '45%',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  arrowRight: {
-    position: 'absolute',
-    right: -18,
-    top: '45%',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  arrowText: {
-    fontSize: 18,
-    color: '#444',
-    fontWeight: '700',
-  },
-});
-
 // フレンドごとにタスクをグループ化（将来的にAPI側で grouped response を返す予定なら差し替え可能）
 function groupFriendTasks(tasks: Task[]): Task[][] {
   const map = new Map<string, Task[]>();
