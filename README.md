@@ -93,16 +93,22 @@ Lazy Bustersは、日常の小さな頑張りが繋がり、支え合いとな�
 ## 開発技術
 ### 活用した技術
 #### API・データ
-* 
-* 
+* Supabase(認証、データベース、ストレージ)
+* Supabase Auth (ユーザー認証)
 
 #### フレームワーク・ライブラリ・モジュール
-* 
-* 
+* React Native
+* Expo
+* Typescript
+* react-navigation/native (画面遷移)
+* expo-camera (カメラ機能)
+* expo-image-picker (画像選択)
+* React Native Animated (アニメーション)
 
 #### デバイス
-* 
-* 
+* iOS 
+* Android
+* Web
 
 ### 独自技術
 #### ハッカソンで開発した独自機能・技術
