@@ -94,7 +94,6 @@ Lazy Bustersは、日常の小さな頑張りが繋がり、支え合いとな�
 ### 活用した技術
 #### API・データ
 * **Supabase** - バックエンドサービス（認証、データベース、ストレージ）
-  - PostgreSQL データベース
   - リアルタイムサブスクリプション
   - Row Level Security (RLS)
   - Supabase Storage（画像アップロード用）
