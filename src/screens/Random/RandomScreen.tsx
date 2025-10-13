@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RandomStyles } from './RandomScreen.styles';
 import { FriendScreen } from '../Friend/FriendScreen';
-import ProfileScreen from '../Profile/ProfileScreen';
 import { Photo } from '../../services/photoService';
 import { PhotoCard } from '../../components/PhotoCard';
 
@@ -322,8 +321,8 @@ export function RandomScreen({ isCameraOpen, photos = [], loading = false }: Ran
         </View>
       )}
 
-      {/* プロフィール画像（右下固定） - カメラ開いてるときは隠す */}
-      {!isCameraOpen && (
+      {/* プロフィール画像（右下固定） - カメラ開いてるときとFriendScreen表示時は隠す */}
+      {!isCameraOpen && active === 'home' && (
         <TouchableOpacity style={RandomStyles.profileButton} onPress={() => navigation.navigate('Profile' as never)}>
           <Image source={profileImage} style={RandomStyles.profileButtonImage} />
         </TouchableOpacity>
