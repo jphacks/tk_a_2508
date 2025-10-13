@@ -33,7 +33,7 @@ export function CameraScreen({ onPhotoTaken, onClose }: CameraScreenProps) {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
+      <View style={styles.permissionContainer}>
         <Text style={styles.message}>カメラの許可が必要です</Text>
         <TouchableOpacity style={styles.button} onPress={requestPermission}>
           <Text style={styles.buttonText}>許可する</Text>
@@ -133,6 +133,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     zIndex: 99999,
   },
+  permissionContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'black',
+    zIndex: 99999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
   camera: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -204,19 +212,23 @@ const styles = StyleSheet.create({
   },
   message: {
     textAlign: 'center',
-    paddingBottom: 10,
+    paddingBottom: 30,
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '500',
+    lineHeight: 28,
   },
   button: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center',
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

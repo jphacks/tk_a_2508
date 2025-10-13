@@ -18,7 +18,8 @@ import {
   fetchMyProfile,
   updateMyProfile,
 } from "../../lib/profile";
-import { pickAndUploadAvatar } from "../../lib/avatar";
+import { pickImageFromLibrary, takePhotoWithCamera } from "../../lib/avatar";
+import { AvatarSelectionModal } from "../../components/AvatarSelectionModal";
 import avatarGirl from "../../../assets/images/image 110708.png";
 import penPhoto from "../../../assets/images/Group 1000006540.png";
 
@@ -47,6 +48,9 @@ const ProfileScreen = () => {
   const [name, setName] = useState("Lazy太郎");
   const [status, setStatus] = useState("TOEICに向けて勉強中！！");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [friendsCount, setFriendsCount] = useState(64);
+  const [postsCount, setPostsCount] = useState(105);
 
   // 初期ロード
   useEffect(() => {
@@ -57,16 +61,46 @@ const ProfileScreen = () => {
         setName(p.name ?? "");
         setStatus(p.status ?? "");
         setAvatarUrl(p.avatar_url ?? null);
+        setFriendsCount(p.friends_count ?? 64);
+        setPostsCount(p.posts_count ?? 105);
       }
     })();
   }, []);
 
   //アイコン変更ハンドラ
-  async function onChangeAvatar() {
+  function onChangeAvatar() {
+    setShowAvatarModal(true);
+  }
+
+  // 写真ライブラリから選択
+  async function handleSelectFromLibrary() {
     try {
-      const newAvatarUrl = await pickAndUploadAvatar();
+      const newAvatarUrl = await pickImageFromLibrary();
       if (newAvatarUrl) {
         setAvatarUrl(newAvatarUrl);
+        // プロフィール情報を再取得
+        const p = await fetchMyProfile();
+        if (p) {
+          setAvatarUrl(p.avatar_url ?? null);
+        }
+        Alert.alert("アップロード完了", "プロフィール写真を更新しました！");
+      }
+    } catch (error: any) {
+      Alert.alert("アップロード失敗", error?.message || "エラーが発生しました");
+    }
+  }
+
+  // カメラで撮影
+  async function handleTakePhoto() {
+    try {
+      const newAvatarUrl = await takePhotoWithCamera();
+      if (newAvatarUrl) {
+        setAvatarUrl(newAvatarUrl);
+        // プロフィール情報を再取得
+        const p = await fetchMyProfile();
+        if (p) {
+          setAvatarUrl(p.avatar_url ?? null);
+        }
         Alert.alert("アップロード完了", "プロフィール写真を更新しました！");
       }
     } catch (error: any) {
@@ -199,12 +233,12 @@ const ProfileScreen = () => {
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <FontAwesome name="users" size={20} color="#666" />
-                <Text style={styles.statValue}>{profile.friends}</Text>
+                <Text style={styles.statValue}>{friendsCount}</Text>
                 <Text style={styles.statLabel}>Friends</Text>
               </View>
               <View style={styles.statItem}>
                 <FontAwesome name="file-text-o" size={20} color="#666" />
-                <Text style={styles.statValue}>{profile.posts}</Text>
+                <Text style={styles.statValue}>{postsCount}</Text>
                 <Text style={styles.statLabel}>投稿</Text>
               </View>
             </View>
@@ -281,6 +315,14 @@ const ProfileScreen = () => {
           </View>
         </ScrollView>
       </View>
+      
+      {/* アバター選択モーダル */}
+      <AvatarSelectionModal
+        visible={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        onSelectFromLibrary={handleSelectFromLibrary}
+        onTakePhoto={handleTakePhoto}
+      />
     </SafeAreaView>
   );
 };
