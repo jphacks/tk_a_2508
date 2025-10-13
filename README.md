@@ -93,21 +93,51 @@ Lazy Bustersは、日常の小さな頑張りが繋がり、支え合いとな�
 ## 開発技術
 ### 活用した技術
 #### API・データ
-* 
-* 
+* **Supabase** - バックエンドサービス（認証、データベース、ストレージ）
+  - PostgreSQL データベース
+  - リアルタイムサブスクリプション
+  - Row Level Security (RLS)
+  - Supabase Storage（画像アップロード用）
+* **Supabase Auth** - ユーザー認証システム
+* **JWT** - トークンベース認証
 
 #### フレームワーク・ライブラリ・モジュール
-* 
-* 
+* **React Native** - クロスプラットフォームモバイルアプリ開発
+* **Expo** - React Native開発環境とビルドツール
+* **TypeScript** - 型安全なJavaScript開発
+* **@react-navigation/native** - 画面遷移管理
+* **@react-navigation/stack** - スタックナビゲーション
+* **expo-camera** - カメラ機能
+* **expo-image-picker** - 画像選択（動的インポート）
+* **expo-linear-gradient** - グラデーション背景
+* **React Native Animated** - アニメーション
+* **PanResponder** - タッチジェスチャー処理
+* **FontAwesome** - アイコンライブラリ
+* **Metro Bundler** - JavaScriptバンドラー
+* **ESLint** - コード品質チェック
 
 #### デバイス
-* 
-* 
+* **iOS** - iPhone、iPad
+* **Android** - スマートフォン、タブレット
+* **Web** - ブラウザ（Chrome、Safari、Firefox、Edge）
+* **レスポンシブデザイン** - 各種画面サイズ対応
 
 ### 独自技術
 #### ハッカソンで開発した独自機能・技術
-* 独自で開発したものの内容をこちらに記載してください
-* 特に力を入れた部分をファイルリンク、またはcommit_idを記載してください。
+* **動的インポートによるプラットフォーム対応**
+  - `expo-image-picker`を動的インポートで読み込み
+  - Web版とネイティブ版の両方に対応
+  - プラットフォーム固有の機能を適切に分岐
+* **Supabase Storage連携による画像管理**
+  - アバター画像のアップロード・管理
+  - 公開URLの自動生成
+  - 既存アカウントの更新処理
+* **RLS（Row Level Security）によるセキュアなデータアクセス**
+  - ユーザーごとのデータアクセス制御
+  - プロフィール情報の安全な更新
+* **リアルタイムデータ同期**
+  - Supabase Realtimeによる写真の即座反映
+  - 複数デバイス間でのデータ同期
 =======
 
 # JP Hacks - Expo + Supabase (Docker)
